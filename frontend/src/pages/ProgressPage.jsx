@@ -31,10 +31,10 @@ export default function ProgressPage({
   };
 
   const getIntensityBadge = (calories) => {
-    if (calories >= 600) return { label: "Akhand Intensity 🔥", bg: "rgba(239, 68, 68, 0.15)", color: "#f87171" };
-    if (calories >= 350) return { label: "Zabardast Session ⚡", bg: "rgba(249, 115, 22, 0.15)", color: "#fb923c" };
-    if (calories > 0) return { label: "Active Yogic Recovery 🌱", bg: "rgba(16, 185, 129, 0.15)", color: "#34d399" };
-    return { label: "Vishram / Rest Day 🛌", bg: "rgba(148, 163, 184, 0.12)", color: "#94a3b8" };
+    if (calories >= 600) return { label: "High Intensity 🔥", bg: "rgba(239, 68, 68, 0.15)", color: "#f87171" };
+    if (calories >= 350) return { label: "Moderate Session ⚡", bg: "rgba(249, 115, 22, 0.15)", color: "#fb923c" };
+    if (calories > 0) return { label: "Active Recovery 🌱", bg: "rgba(16, 185, 129, 0.15)", color: "#34d399" };
+    return { label: "Rest Day 🛌", bg: "rgba(148, 163, 184, 0.12)", color: "#94a3b8" };
   };
 
   // Calculate consistency rating based on non-zero days in past 30 days

@@ -70,7 +70,7 @@ export default function AuthPage() {
           alignItems: "center",
         }}
       >
-        {/* Left: Branding & Cultural Indian Fitness Story */}
+        {/* Left: Branding & Overview */}
         <div>
           <div
             style={{
@@ -87,39 +87,37 @@ export default function AuthPage() {
               marginBottom: 18,
             }}
           >
-            <span>🇮🇳</span> Fit India Movement • Workout & Wellness
+            Workout & Health Tracker
           </div>
 
           <h1 style={{ fontSize: "2.8rem", lineHeight: 1.18, fontWeight: 800, marginBottom: 14 }}>
-            Empower Your Fitness with <span className="text-gradient">FitTrack</span>
+            Take Control of Your Fitness with <span className="text-gradient">FitTrack</span>
           </h1>
 
           <p style={{ fontSize: "1.05rem", color: "var(--text-muted)", lineHeight: 1.6, marginBottom: 26 }}>
-            Designed for the Indian fitness journey. Whether you are running at Marine Drive, 
-            practicing 108 Surya Namaskars, pumping iron in the akhada, or hitting 10,000 steps with 
-            post-dinner Shatapawali — track your energy output with precision.
+            Track daily workouts, monitor active calorie burn, build habit streaks, and hit your fitness milestones with structured logging and performance analytics.
           </p>
 
-          {/* Core Feature Pillars */}
+          {/* Core Feature Highlights */}
           <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 28 }}>
             {[
               {
                 icon: Heart,
                 color: "#10b981",
-                title: "Yoga, Running, Akhada & Gym",
-                desc: "Pre-configured calorie rates for Yogasan, Strength, HIIT, Badminton, and Shatapawali.",
+                title: "Workouts, Yoga & Cardio",
+                desc: "Auto-calculated energy burn for strength sessions, running, HIIT, and recovery walks.",
               },
               {
                 icon: Flame,
                 color: "#f97316",
-                title: "Fit India Streaks & Calorie Targets",
-                desc: "Set real milestones: Wedding season weight loss, festive calorie burn, and step goals.",
+                title: "Daily Habit Streaks & Target Milestones",
+                desc: "Stay consistent with active streak tracking, progress comparisons, and quantifiable goals.",
               },
               {
                 icon: ShieldCheck,
                 color: "#6366f1",
-                title: "FastAPI + Secure JWT Authentication",
-                desc: "Bcrypt salted password encryption and private data isolation for every athlete.",
+                title: "Secure Account & Data Isolation",
+                desc: "Encrypted password storage and private tracking for every user.",
               },
             ].map((f, i) => {
               const Icon = f.icon;
@@ -150,7 +148,7 @@ export default function AuthPage() {
             })}
           </div>
 
-          {/* Quick 1-Click Demo Profiles */}
+          {/* Quick Demo Access */}
           <div
             style={{
               padding: "16px 20px",
@@ -160,10 +158,10 @@ export default function AuthPage() {
             }}
           >
             <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#fff", marginBottom: 4 }}>
-              ⚡ Quick Demo Access (Explore Seeded Data):
+              ⚡ Quick Demo Login:
             </div>
             <div style={{ fontSize: "0.775rem", color: "var(--text-muted)", marginBottom: 12 }}>
-              Experience 30 days of workout logs, active streaks, and goals instantly:
+              Explore pre-populated workout history, active streaks, and goals instantly:
             </div>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               <button
@@ -171,14 +169,14 @@ export default function AuthPage() {
                 disabled={loading}
                 className="btn btn-primary btn-sm"
               >
-                <Sparkles size={13} /> Login as Arjun Sharma (Athlete)
+                <Sparkles size={13} /> Demo Account: Arjun Sharma
               </button>
               <button
                 onClick={() => handleDemoLogin("priya.patel@fittrack.in", "password123")}
                 disabled={loading}
                 className="btn btn-secondary btn-sm"
               >
-                Login as Priya Patel
+                Demo Account: Priya Patel
               </button>
             </div>
           </div>
@@ -188,9 +186,9 @@ export default function AuthPage() {
         <div className="glass-card" style={{ padding: "36px 32px", background: "rgba(17, 24, 39, 0.92)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
             <div>
-              <h2 style={{ fontSize: "1.65rem", margin: 0 }}>{isLogin ? "Namaste! Welcome Back" : "Start Your Fitness Yatra"}</h2>
+              <h2 style={{ fontSize: "1.65rem", margin: 0 }}>{isLogin ? "Welcome Back" : "Create Account"}</h2>
               <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: 4 }}>
-                {isLogin ? "Sign in to view your daily calorie burn & streaks" : "Join thousands of Indians living a fitter, healthier life"}
+                {isLogin ? "Sign in to view your daily calorie burn & streaks" : "Start logging your workouts and tracking consistency"}
               </p>
             </div>
             <div

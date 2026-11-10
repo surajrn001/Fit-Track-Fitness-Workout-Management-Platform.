@@ -75,10 +75,7 @@ class Notification(Base):
 
     user = relationship("User", back_populates="notifications")
 
-# ----------------- PHASE 2 MODELS -----------------
-
 class WorkoutPlan(Base):
-    """MODULE 7: Workout Plans & Scheduling table"""
     __tablename__ = "workout_plans"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -92,19 +89,17 @@ class WorkoutPlan(Base):
     user = relationship("User", back_populates="workout_plans")
 
 class Exercise(Base):
-    """MODULE 8: Predefined Exercise Library table"""
     __tablename__ = "exercises"
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(150), nullable=False, index=True)
-    category = Column(String(50), nullable=False)  # Cardio / Strength / Yoga
+    category = Column(String(50), nullable=False)
     description = Column(Text, nullable=True)
-    duration = Column(Integer, nullable=False)      # Predefined duration in minutes
+    duration = Column(Integer, nullable=False)
     calories_est = Column(Float, default=150.0, nullable=False)
     difficulty = Column(String(50), default="Intermediate", nullable=False)
 
 class Streak(Base):
-    """MODULE 10: Streak Tracking System table"""
     __tablename__ = "streak"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -116,21 +111,19 @@ class Streak(Base):
     user = relationship("User", back_populates="streak")
 
 class Badge(Base):
-    """MODULE 11: Achievement Badges table"""
     __tablename__ = "badges"
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(150), unique=True, nullable=False)
     description = Column(Text, nullable=False)
     icon = Column(String(100), nullable=False)
-    category = Column(String(50), default="General", nullable=False)  # workout / streak / goal / milestone
-    condition_type = Column(String(50), nullable=True)               # workouts_count / streak_days / goals_completed / calories_total
+    category = Column(String(50), default="General", nullable=False)
+    condition_type = Column(String(50), nullable=True)
     condition_value = Column(Float, default=0.0, nullable=False)
 
     user_badges = relationship("UserBadge", back_populates="badge", cascade="all, delete-orphan")
 
 class UserBadge(Base):
-    """MODULE 11: User Badges earned junction table"""
     __tablename__ = "user_badges"
 
     id = Column(Integer, primary_key=True, index=True)

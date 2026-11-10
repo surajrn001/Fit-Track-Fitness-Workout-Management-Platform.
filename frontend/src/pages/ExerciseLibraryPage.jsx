@@ -1,22 +1,22 @@
 import React, { useState } from "react";
-import { 
-  Search, 
-  Dumbbell, 
-  Clock, 
-  Flame, 
-  Plus, 
-  Calendar, 
-  Zap, 
-  Activity, 
+import {
+  Search,
+  Dumbbell,
+  Clock,
+  Flame,
+  Plus,
+  Calendar,
+  Zap,
+  Activity,
   Sparkles,
   Layers,
   X
 } from "lucide-react";
 
-export default function ExerciseLibraryPage({ 
-  exercises = [], 
-  onSelectExerciseToLog, 
-  onSelectExerciseToSchedule 
+export default function ExerciseLibraryPage({
+  exercises = [],
+  onSelectExerciseToLog,
+  onSelectExerciseToSchedule
 }) {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedDifficulty, setSelectedDifficulty] = useState("All");
@@ -36,8 +36,8 @@ export default function ExerciseLibraryPage({
   const filteredExercises = exercises.filter((ex) => {
     const matchCat = selectedCategory === "All" || ex.category.toLowerCase() === selectedCategory.toLowerCase();
     const matchDiff = selectedDifficulty === "All" || (ex.difficulty && ex.difficulty.toLowerCase() === selectedDifficulty.toLowerCase());
-    const matchSearch = !searchQuery || 
-      ex.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    const matchSearch = !searchQuery ||
+      ex.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (ex.description && ex.description.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchCat && matchDiff && matchSearch;
   });
@@ -64,15 +64,15 @@ export default function ExerciseLibraryPage({
       {/* Header */}
       <div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-          <span style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--emerald-primary)", fontWeight: 700 }}>
-            Module 8 • Predefined Exercise Library
+          <span style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--emerald-primary)", fontWeight: 700 }}>
+            Exercise Catalog & Directory
           </span>
         </div>
         <h1 style={{ fontSize: "2rem", fontWeight: 800, margin: 0, fontFamily: "var(--font-display)" }}>
           Exercise <span className="text-gradient">Library</span>
         </h1>
         <p style={{ color: "var(--text-muted)", fontSize: "0.95rem", marginTop: 4 }}>
-          Discover predefined workouts, strength drills, and yogic flows. Log directly into your activity history or schedule into your training calendar.
+          Browse workouts, strength movements, and yogic flows. Log directly to history or schedule into your training calendar.
         </p>
       </div>
 

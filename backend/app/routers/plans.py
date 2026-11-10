@@ -22,7 +22,6 @@ def list_plans(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Module 7: Retrieve scheduled workout plans for current user."""
     return get_workout_plans(
         db=db,
         user_id=current_user.id,
@@ -37,7 +36,6 @@ def create_plan(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Module 7: Schedule a new workout plan."""
     return create_workout_plan(db=db, user_id=current_user.id, plan_in=plan_in)
 
 @router.get("/{plan_id}", response_model=WorkoutPlanResponse)
@@ -81,7 +79,6 @@ def mark_plan_completed_and_log(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Module 7: Mark plan as completed and automatically log it into workout history."""
     plan = get_workout_plan_by_id(db=db, plan_id=plan_id, user_id=current_user.id)
     if not plan:
         raise HTTPException(status_code=404, detail="Scheduled workout plan not found")

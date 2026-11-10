@@ -120,7 +120,7 @@ export default function BadgePopupModal({ isOpen, onClose, badge }) {
           }}
         >
           <Sparkles size={18} />
-          Shabaash! Continue Training
+          Continue Training
         </button>
       </div>
     </div>

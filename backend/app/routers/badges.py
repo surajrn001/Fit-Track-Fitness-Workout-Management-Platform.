@@ -15,7 +15,6 @@ def list_badges(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Module 11: Get list of all achievement badges with user's unlocked status and timestamps."""
     return get_all_badges_for_user(db=db, user_id=current_user.id)
 
 @router.post("/check", response_model=List[BadgeResponse])
@@ -23,7 +22,6 @@ def trigger_badge_check(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Module 11: Check milestone requirements and return newly awarded badges."""
     new_badges = check_and_award_badges(db=db, user_id=current_user.id)
     return [
         {

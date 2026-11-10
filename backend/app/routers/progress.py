@@ -57,7 +57,6 @@ def get_user_weekly_comparison(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Module 9: Compare weekly progress (this week vs last week with improvement trends)."""
     return get_weekly_comparison(db=db, user_id=current_user.id)
 
 @router.get("/comparison/monthly", response_model=MonthlyComparisonResponse)
@@ -65,7 +64,6 @@ def get_user_monthly_comparison(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Module 9: Compare monthly stats (last 30 days vs prior 30 days with trends)."""
     return get_monthly_comparison(db=db, user_id=current_user.id)
 
 @router.get("/personalized", response_model=PersonalizedDashboardResponse)
@@ -73,7 +71,6 @@ def get_personalized_dashboard(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Module 12: Unified personalized dashboard payload with streak, goals, plans, and greetings."""
     return get_personalized_dashboard_data(db=db, user=current_user)
 
 @router.post("/sync-all")

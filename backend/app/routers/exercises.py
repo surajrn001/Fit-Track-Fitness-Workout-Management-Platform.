@@ -17,7 +17,6 @@ def list_exercises(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Module 8: Predefined exercises library with category filter and search."""
     return get_exercises(db=db, category=category, search=search)
 
 @router.get("/{exercise_id}", response_model=ExerciseResponse)
@@ -38,7 +37,6 @@ def log_exercise_to_workouts(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Module 8: 1-Click logging of exercise from library directly into user's workouts."""
     exercise = get_exercise_by_id(db=db, exercise_id=exercise_id)
     if not exercise:
         raise HTTPException(status_code=404, detail="Exercise not found")
@@ -51,7 +49,6 @@ def schedule_exercise_to_plan(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Module 8: Schedule an exercise into the calendar planner."""
     exercise = get_exercise_by_id(db=db, exercise_id=exercise_id)
     if not exercise:
         raise HTTPException(status_code=404, detail="Exercise not found")

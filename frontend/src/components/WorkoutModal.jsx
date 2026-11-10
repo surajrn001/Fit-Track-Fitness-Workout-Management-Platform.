@@ -198,9 +198,9 @@ export default function WorkoutModal({ isOpen, onClose, onSave, initialData = nu
             </div>
           </div>
 
-          {/* Quick presets for authentic Indian workouts */}
+          {/* Quick presets */}
           <div style={{ marginTop: 6, marginBottom: 18 }}>
-            <span style={{ fontSize: "0.775rem", color: "var(--text-dim)", display: "block", marginBottom: 6 }}>Popular Indian Fitness Routines:</span>
+            <span style={{ fontSize: "0.775rem", color: "var(--text-dim)", display: "block", marginBottom: 6 }}>Quick Workout Presets:</span>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {[
                 { name: "Surya Namaskar & Pranayama", cat: "Yoga", dur: 35, cal: 190 },

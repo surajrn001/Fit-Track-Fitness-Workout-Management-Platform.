@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from ..database import get_db
@@ -20,7 +20,6 @@ def read_notifications(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Retrieve notifications for the user; automatically checks if daily workout reminder is due."""
     trigger_daily_reminders_if_needed(db, current_user.id)
     return get_notifications(db=db, user_id=current_user.id)
 
@@ -30,12 +29,11 @@ def mark_as_read(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Mark a specific notification as read."""
     notif = mark_notification_read(db=db, notif_id=notification_id, user_id=current_user.id)
     if not notif:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Notification not found or access denied."
+            detail="Notification not found."
         )
     return notif
 
@@ -44,7 +42,6 @@ def mark_all_read(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Mark all unread notifications as read for current user."""
     count = mark_all_notifications_read(db=db, user_id=current_user.id)
     return {"detail": f"{count} notifications marked as read."}
 
@@ -54,7 +51,6 @@ def delete_notification(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Delete a notification."""
     notif = db.query(Notification).filter(
         Notification.id == notification_id,
         Notification.user_id == current_user.id
@@ -62,7 +58,7 @@ def delete_notification(
     if not notif:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Notification not found or access denied."
+            detail="Notification not found."
         )
     db.delete(notif)
     db.commit()

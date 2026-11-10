@@ -163,7 +163,7 @@ export default function GoalModal({ isOpen, onClose, onSave, initialData = null 
 
           {/* Quick presets */}
           <div style={{ marginTop: 6, marginBottom: 16 }}>
-            <span style={{ fontSize: "0.775rem", color: "var(--text-dim)", display: "block", marginBottom: 6 }}>Suggested Indian Milestones:</span>
+            <span style={{ fontSize: "0.775rem", color: "var(--text-dim)", display: "block", marginBottom: 6 }}>Suggested Milestones:</span>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {[
                 { type: "Weight Loss: Wedding Season Ready", target: 5, label: "Lose 5kg for Wedding" },

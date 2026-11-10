@@ -58,7 +58,6 @@ export default function Navbar({
     { id: "analytics", label: "Analytics", icon: BarChart3 },
   ];
 
-
   return (
     <header
       style={{
@@ -213,7 +212,6 @@ export default function Navbar({
 
           {/* Notifications Bell */}
           <div style={{ position: "relative" }} ref={notifRef}>
-
             <button
               onClick={() => setShowNotifications(!showNotifications)}
               className="btn-secondary"
@@ -298,7 +296,7 @@ export default function Navbar({
                 {user?.username?.charAt(0).toUpperCase() || "A"}
               </div>
               <span style={{ fontSize: "0.85rem", fontWeight: 600, maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {user?.username ? `Namaste, ${user.username.replace(/_fitness|_fit/, '')}` : "Account"}
+                {user?.username ? (user.username.split('_')[0].charAt(0).toUpperCase() + user.username.split('_')[0].slice(1)) : "Account"}
               </span>
             </div>
 

@@ -148,9 +148,7 @@ class MonthlyAnalyticsResponse(BaseModel):
     daily_data: List[DailyTrend]
     categories: List[CategoryStat]
 
-# ----------------- PHASE 2 SCHEMAS -----------------
-
-# MODULE 7: Workout Plans & Scheduling
+# Plans & Scheduling
 class WorkoutPlanBase(BaseModel):
     title: str = Field(..., min_length=2, max_length=200)
     description: Optional[str] = None
@@ -174,7 +172,7 @@ class WorkoutPlanResponse(WorkoutPlanBase):
     class Config:
         from_attributes = True
 
-# MODULE 8: Exercise Library
+# Exercise Library
 class ExerciseBase(BaseModel):
     name: str = Field(..., min_length=2, max_length=150)
     category: str = Field(..., description="Cardio / Strength / Yoga")
@@ -197,7 +195,7 @@ class ExerciseLogRequest(BaseModel):
     duration: Optional[int] = Field(None, gt=0)
     calories_burned: Optional[float] = Field(None, ge=0)
 
-# MODULE 9: Progress Comparison
+# Progress Comparison
 class MetricComparison(BaseModel):
     current: float
     previous: float
@@ -217,7 +215,7 @@ class MonthlyComparisonResponse(BaseModel):
     metrics: dict
     insights: List[str]
 
-# MODULE 10: Streak Tracking
+# Streak Tracking
 class StreakResponse(BaseModel):
     user_id: int
     current_streak: int
@@ -231,7 +229,7 @@ class StreakResponse(BaseModel):
     class Config:
         from_attributes = True
 
-# MODULE 11: Achievement Badges
+# Achievement Badges
 class BadgeResponse(BaseModel):
     id: int
     name: str
@@ -254,7 +252,7 @@ class UserBadgeResponse(BaseModel):
     class Config:
         from_attributes = True
 
-# MODULE 12: Personalized Dashboard
+# Personalized Dashboard
 class PersonalizedDashboardResponse(BaseModel):
     user: UserResponse
     greeting: str

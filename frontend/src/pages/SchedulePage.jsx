@@ -96,15 +96,15 @@ export default function SchedulePage({
       <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-end", gap: 16 }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-            <span style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--emerald-primary)", fontWeight: 700 }}>
-              Module 7 • Workout Scheduling & Calendar
+            <span style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--emerald-primary)", fontWeight: 700 }}>
+              Training Schedule & Calendar
             </span>
           </div>
           <h1 style={{ fontSize: "2rem", fontWeight: 800, margin: 0, fontFamily: "var(--font-display)" }}>
             Workout <span className="text-gradient">Planner & Schedule</span>
           </h1>
           <p style={{ color: "var(--text-muted)", fontSize: "0.95rem", marginTop: 4 }}>
-            Plan upcoming training sessions in advance, maintain consistency, and schedule your fitness journey.
+            Plan upcoming training sessions in advance, maintain consistency, and track your schedule.
           </p>
         </div>
 

@@ -20,7 +20,7 @@ def seed_database():
     db = SessionLocal()
 
     try:
-        # 1. Seed Predefined Exercises (Module 8)
+        # Predefined Exercises
         predefined_exercises = [
             ("Surya Namaskar Sprint (12 Cycles)", "Yoga", "Dynamic traditional sun salutation flow cultivating core stability, spinal mobility, and endurance.", 20, 180.0, "Beginner"),
             ("Marine Drive 5K Sunrise Jog", "Cardio", "Brisk seaside endurance running boosting aerobic capacity, heart rate, and metabolic rate.", 30, 320.0, "Intermediate"),
@@ -52,7 +52,7 @@ def seed_database():
                 ))
         db.commit()
 
-        # 2. Seed Predefined Badges (Module 11)
+        # Predefined Badges
         predefined_badges = [
             ("Pehla Kadam (First Step)", "Completed your very first workout on FitTrack! The journey begins.", "footprints", "milestone", "workouts_count", 1),
             ("Warrior in the Making", "Logged 5 workout sessions with unwavering dedication.", "swords", "milestone", "workouts_count", 5),
@@ -240,29 +240,29 @@ def seed_database():
                 notifications_data = [
                     Notification(
                         user_id=user.id,
-                        title="🏆 Badhai Ho! Goal Conquered!",
-                        message="Congratulations Arjun! You completed your 'Desi Akhada Strength (2.5 kg muscle gain)' milestone ahead of schedule!",
+                        title="🏆 Goal Achieved!",
+                        message="Congratulations! You completed your 'Desi Akhada Strength (2.5 kg muscle gain)' milestone ahead of schedule!",
                         is_read=True,
                         created_at=datetime.now(timezone.utc) - timedelta(days=2, hours=3)
                     ),
                     Notification(
                         user_id=user.id,
-                        title="🔥 Shabaash! 85% Milestone Reached!",
-                        message="Zabardast energy! You're at 85% of your 'Fit India 15,000 Calorie Burn' target. Bas thoda aur!",
+                        title="🔥 85% Milestone Reached!",
+                        message="Keep it up! You're at 85% of your 'Fit India 15,000 Calorie Burn' target.",
                         is_read=False,
                         created_at=datetime.now(timezone.utc) - timedelta(hours=14)
                     ),
                     Notification(
                         user_id=user.id,
-                        title="⏰ Fit India Daily Reminder",
-                        message="Namaste Arjun! Don't let your active workout streak break. A quick 20-min session makes all the difference!",
+                        title="⏰ Daily Workout Reminder",
+                        message="Maintain your active workout streak today. Even a quick 20-min session makes all the difference!",
                         is_read=False,
                         created_at=datetime.now(timezone.utc) - timedelta(hours=2)
                     ),
                 ]
                 db.add_all(notifications_data)
 
-                # Seed Scheduled Workout Plans (Module 7)
+                # Seed Scheduled Workout Plans
                 print(f"Creating scheduled workout plans for {user.username}...")
                 plans_data = [
                     WorkoutPlan(

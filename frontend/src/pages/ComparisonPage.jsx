@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Minus, 
-  Calendar, 
-  Flame, 
-  Dumbbell, 
-  Clock, 
-  Award, 
+import {
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Calendar,
+  Flame,
+  Dumbbell,
+  Clock,
+  Award,
   Sparkles,
   BarChart3,
   CheckCircle2,
@@ -66,15 +66,15 @@ export default function ComparisonPage({ initialWeeklyData = null, initialMonthl
       <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-end", gap: 16 }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-            <span style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--emerald-primary)", fontWeight: 700 }}>
-              Module 9 • Progress & Performance Comparison
+            <span style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--emerald-primary)", fontWeight: 700 }}>
+              Performance Velocity & Comparison
             </span>
           </div>
           <h1 style={{ fontSize: "2rem", fontWeight: 800, margin: 0, fontFamily: "var(--font-display)" }}>
             Progress <span className="text-gradient">Comparison</span>
           </h1>
           <p style={{ color: "var(--text-muted)", fontSize: "0.95rem", marginTop: 4 }}>
-            Benchmark current performance against previous cycles, analyze improvement velocity, and elevate training consistency.
+            Benchmark current performance against previous cycles and track your training improvement rate.
           </p>
         </div>
 
@@ -324,7 +324,7 @@ export default function ComparisonPage({ initialWeeklyData = null, initialMonthl
                 <Sparkles size={20} />
               </div>
               <h3 style={{ fontSize: "1.2rem", fontWeight: 700, margin: 0 }}>
-                FitTrack Coach Performance Insights
+                Performance Insights & Coaching Notes
               </h3>
             </div>
 

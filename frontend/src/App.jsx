@@ -27,7 +27,7 @@ function MainApp() {
   // Navigation State
   const [activeTab, setActiveTab] = useState("dashboard");
 
-  // Core Data States
+  // Data States
   const [workouts, setWorkouts] = useState([]);
   const [summary, setSummary] = useState(null);
   const [dailyRecords, setDailyRecords] = useState([]);
@@ -35,8 +35,6 @@ function MainApp() {
   const [weeklyAnalytics, setWeeklyAnalytics] = useState(null);
   const [monthlyAnalytics, setMonthlyAnalytics] = useState(null);
   const [notifications, setNotifications] = useState([]);
-
-  // Phase 2 Data States
   const [plans, setPlans] = useState([]);
   const [exercises, setExercises] = useState([]);
   const [streak, setStreak] = useState(null);
@@ -209,7 +207,7 @@ function MainApp() {
     }
   };
 
-  // Workout Plans Handlers (Module 7)
+  // Schedule Handlers
   const handleSavePlan = async (planPayload) => {
     try {
       if (editingPlan) {
@@ -228,7 +226,6 @@ function MainApp() {
 
   const handleDeletePlan = async (id) => {
     try {
-      // Optimistic delete
       setPlans((prev) => prev.filter((p) => p.id !== id));
       await api.deleteWorkoutPlan(id);
       showFeedback("Workout plan removed from schedule.");
@@ -241,7 +238,6 @@ function MainApp() {
 
   const handleCompletePlan = async (id) => {
     try {
-      // Optimistic completion mark
       setPlans((prev) =>
         prev.map((p) => (p.id === id ? { ...p, is_completed: true } : p))
       );
@@ -254,7 +250,7 @@ function MainApp() {
     }
   };
 
-  // Exercise Library Handlers (Module 8)
+  // Exercise Library Handlers
   const handleLogExercise = async (exerciseId, payload) => {
     try {
       await api.logExercise(exerciseId, payload);
@@ -275,7 +271,7 @@ function MainApp() {
     }
   };
 
-  // Goals Handlers (Module 4)
+  // Goals Handlers
   const handleSaveGoal = async (goalPayload) => {
     try {
       if (editingGoal) {
@@ -429,7 +425,6 @@ function MainApp() {
 
       {/* Main Body Content */}
       <main style={{ flex: 1, maxWidth: 1300, width: "100%", margin: "0 auto", padding: "30px 24px 60px 24px" }}>
-        {/* Module 12: Personalized Dashboard */}
         {activeTab === "dashboard" && (
           <DashboardPage
             summary={summary}
@@ -460,7 +455,6 @@ function MainApp() {
           />
         )}
 
-        {/* Module 2: Workouts */}
         {activeTab === "workouts" && (
           <WorkoutsPage
             workouts={workouts}
@@ -477,7 +471,6 @@ function MainApp() {
           />
         )}
 
-        {/* Module 7: Workout Plans & Scheduling */}
         {activeTab === "schedule" && (
           <SchedulePage
             plans={plans}
@@ -494,7 +487,6 @@ function MainApp() {
           />
         )}
 
-        {/* Module 8: Exercise Library */}
         {activeTab === "exercises" && (
           <ExerciseLibraryPage
             exercises={exercises}
@@ -509,7 +501,6 @@ function MainApp() {
           />
         )}
 
-        {/* Module 3: Daily Progress */}
         {activeTab === "progress" && (
           <ProgressPage
             dailyRecords={dailyRecords}
@@ -522,7 +513,6 @@ function MainApp() {
           />
         )}
 
-        {/* Module 9: Progress Comparison */}
         {activeTab === "comparison" && (
           <ComparisonPage
             initialWeeklyData={weeklyComp}
@@ -530,7 +520,6 @@ function MainApp() {
           />
         )}
 
-        {/* Module 4: Fitness Goals */}
         {activeTab === "goals" && (
           <GoalsPage
             goals={goals}
@@ -547,7 +536,6 @@ function MainApp() {
           />
         )}
 
-        {/* Module 11: Achievement Badges */}
         {activeTab === "badges" && (
           <BadgesPage
             badges={badges}
@@ -555,7 +543,6 @@ function MainApp() {
           />
         )}
 
-        {/* Module 5: Analytics & Reports */}
         {activeTab === "analytics" && (
           <AnalyticsPage
             weeklyData={weeklyAnalytics}

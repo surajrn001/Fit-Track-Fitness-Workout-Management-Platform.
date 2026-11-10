@@ -49,15 +49,15 @@ export default function BadgesPage({ badges = [], onOpenBadgePopup }) {
       {/* Header */}
       <div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-          <span style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--emerald-primary)", fontWeight: 700 }}>
-            Module 11 • Achievement Badges & Milestones
+          <span style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--emerald-primary)", fontWeight: 700 }}>
+            Honors & Milestones
           </span>
         </div>
         <h1 style={{ fontSize: "2rem", fontWeight: 800, margin: 0, fontFamily: "var(--font-display)" }}>
           Achievement <span className="text-gradient">Badges</span>
         </h1>
         <p style={{ color: "var(--text-muted)", fontSize: "0.95rem", marginTop: 4 }}>
-          Earn honors, unlock badges, and conquer fitness milestones as you train consistently and build lifelong discipline.
+          Earn honors, unlock badges, and hit fitness milestones as you train consistently.
         </p>
       </div>
 
@@ -91,10 +91,10 @@ export default function BadgesPage({ badges = [], onOpenBadgePopup }) {
             </div>
             <div>
               <span style={{ fontSize: "0.8rem", color: "#fbbf24", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                FitTrack Hall of Honors
+                Badges & Milestones
               </span>
               <h2 style={{ fontSize: "1.5rem", fontWeight: 800, margin: "2px 0 0" }}>
-                {unlockedCount} of {totalCount} Badges Conquered ({completionPercentage}%)
+                {unlockedCount} of {totalCount} Badges Unlocked ({completionPercentage}%)
               </h2>
             </div>
           </div>

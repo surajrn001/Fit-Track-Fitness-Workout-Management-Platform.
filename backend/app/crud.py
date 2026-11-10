@@ -179,8 +179,8 @@ def update_goal(db: Session, goal: Goal, goal_update: GoalUpdate) -> Goal:
         if not was_completed:
             create_notification(
                 db, goal.user_id,
-                title="🏆 Badhai Ho! Goal Conquered!",
-                message=f"Spectacular achievement! You reached your milestone for {goal.goal_type} ({goal.target_value})! Shabaash!"
+                title="🏆 Goal Achieved!",
+                message=f"Congratulations! You reached your target for {goal.goal_type} ({goal.target_value})!"
             )
     else:
         # Check 80% milestone
@@ -188,8 +188,8 @@ def update_goal(db: Session, goal: Goal, goal_update: GoalUpdate) -> Goal:
         if ratio >= 0.8 and not was_completed:
             create_notification(
                 db, goal.user_id,
-                title="🔥 Shabaash! Almost There!",
-                message=f"Zabardast energy! You're at {round(ratio * 100)}% of your goal: {goal.goal_type}. Bas thoda aur!"
+                title="🔥 Almost There!",
+                message=f"Keep it up! You're at {round(ratio * 100)}% of your goal: {goal.goal_type}."
             )
 
     db.commit()
@@ -291,8 +291,8 @@ def trigger_daily_reminders_if_needed(db: Session, user_id: int):
         if not existing:
             create_notification(
                 db, user_id,
-                title="⏰ Fit India Daily Reminder",
-                message="Namaste! Maintain your active workout streak today. Even a quick 20-min Surya Namaskar or evening Shatapawali walk makes a huge difference!"
+                title="⏰ Daily Workout Reminder",
+                message="Maintain your active workout streak today. Even a quick 20-min session makes a big difference!"
             )
 
 # ---------------- DASHBOARD SUMMARY & STREAK ----------------
@@ -361,13 +361,13 @@ def get_streak_details(db: Session, user_id: int) -> Dict[str, Any]:
 
     if streak.last_workout_date == today:
         status = "active"
-        msg = f"🔥 Zabardast! {streak.current_streak}-day streak active. You logged a workout today!"
+        msg = f"🔥 {streak.current_streak}-day streak active. You logged a workout today!"
     elif streak.last_workout_date == yesterday:
         status = "at_risk"
-        msg = f"⚡ Agni alert! Maintain your {streak.current_streak}-day streak with a workout today."
+        msg = f"⚡ Keep your {streak.current_streak}-day streak alive with a workout today."
     else:
         status = "resting"
-        msg = "🌟 Start fresh today! 10-20 mins of Surya Namaskar or a walk begins your next streak."
+        msg = "🌟 Start a fresh streak today with a workout session."
 
     milestones = [3, 7, 14, 21, 30, 50, 100]
     next_milestone = next((m for m in milestones if m > streak.current_streak), streak.current_streak + 10)
@@ -384,7 +384,7 @@ def get_streak_details(db: Session, user_id: int) -> Dict[str, Any]:
         "streak_message": msg,
     }
 
-# ---------------- MODULE 11: ACHIEVEMENT BADGES ----------------
+# Achievement Badges
 def check_and_award_badges(db: Session, user_id: int) -> List[Badge]:
     """Check user milestones and award new badges."""
     user = db.query(User).filter(User.id == user_id).first()
@@ -431,7 +431,7 @@ def check_and_award_badges(db: Session, user_id: int) -> List[Badge]:
             create_notification(
                 db, user_id,
                 title=f"🎖️ Badge Unlocked: {b.name}!",
-                message=f"Badhai ho! You unlocked the '{b.name}' badge: {b.description}."
+                message=f"Congratulations! You unlocked the '{b.name}' badge: {b.description}."
             )
 
     if newly_awarded:
@@ -462,7 +462,7 @@ def get_all_badges_for_user(db: Session, user_id: int) -> List[Dict[str, Any]]:
         })
     return result
 
-# ---------------- MODULE 7: WORKOUT PLANS & SCHEDULING ----------------
+# Workout Plans & Scheduling
 def create_workout_plan(db: Session, user_id: int, plan_in: WorkoutPlanCreate) -> WorkoutPlan:
     plan = WorkoutPlan(
         user_id=user_id,
@@ -540,11 +540,11 @@ def complete_and_log_plan(db: Session, plan: WorkoutPlan) -> Workout:
     create_notification(
         db, plan.user_id,
         title="✅ Scheduled Workout Completed!",
-        message=f"Shabaash! '{plan.title}' marked completed and logged into your workout history."
+        message=f"'{plan.title}' marked completed and logged into your workout history."
     )
     return workout
 
-# ---------------- MODULE 8: PREDEFINED EXERCISE LIBRARY ----------------
+# Exercise Library
 def get_exercises(db: Session, category: Optional[str] = None, search: Optional[str] = None) -> List[Exercise]:
     query = db.query(Exercise)
     if category and category.lower() != "all":
@@ -592,7 +592,7 @@ def log_exercise_as_workout(
     )
     return workout
 
-# ---------------- MODULE 9: PROGRESS COMPARISON ----------------
+# Progress Comparison
 def calculate_metric_comparison(current: float, previous: float) -> Dict[str, Any]:
     diff = current - previous
     if previous > 0:
@@ -767,7 +767,7 @@ def get_monthly_comparison(db: Session, user_id: int) -> Dict[str, Any]:
         "insights": insights
     }
 
-# ---------------- MODULE 12: PERSONALIZED DASHBOARD ----------------
+# Personalized Dashboard
 def get_personalized_dashboard_data(db: Session, user: User) -> Dict[str, Any]:
     summary = get_dashboard_summary(db, user.id)
     streak_info = get_streak_details(db, user.id)

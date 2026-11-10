@@ -304,8 +304,8 @@ export default function AnalyticsPage({
         <div className="glass-card" style={{ padding: "26px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
             <div>
-              <h3 style={{ fontSize: "1.2rem", margin: 0 }}>Fit India Coaching Insights</h3>
-              <span style={{ fontSize: "0.8rem", color: "var(--text-dim)" }}>Holistic fitness observations</span>
+              <h3 style={{ fontSize: "1.2rem", margin: 0 }}>Training & Coaching Insights</h3>
+              <span style={{ fontSize: "0.8rem", color: "var(--text-dim)" }}>Performance observations</span>
             </div>
             <Award size={18} color="var(--emerald-primary)" />
           </div>
@@ -320,10 +320,10 @@ export default function AnalyticsPage({
               }}
             >
               <h4 style={{ fontSize: "0.95rem", color: "var(--emerald-primary)", margin: "0 0 4px 0" }}>
-                🧘 Yogic Balance & Flexibility
+                🧘 Balance & Mobility
               </h4>
               <p style={{ fontSize: "0.825rem", color: "var(--text-main)", margin: 0, lineHeight: 1.5 }}>
-                Your regular Surya Namaskar and Pranayama sessions build diaphragmatic lung capacity and flexibility, balancing out heavy gym/akhada sessions!
+                Your regular yoga and stretching sessions cultivate mobility and lung endurance, balancing out heavy resistance training.
               </p>
             </div>
 
@@ -339,7 +339,7 @@ export default function AnalyticsPage({
                 🏃 Cardiovascular Conditioning
               </h4>
               <p style={{ fontSize: "0.825rem", color: "var(--text-main)", margin: 0, lineHeight: 1.5 }}>
-                Accumulated {Math.round(activeData?.total_calories || 0).toLocaleString()} calories burned. Outdoor running and badminton keep cardiovascular endurance high!
+                Accumulated {Math.round(activeData?.total_calories || 0).toLocaleString()} calories burned. Outdoor running and interval drills maintain strong cardiovascular health.
               </p>
             </div>
 
@@ -352,10 +352,10 @@ export default function AnalyticsPage({
               }}
             >
               <h4 style={{ fontSize: "0.95rem", color: "#818cf8", margin: "0 0 4px 0" }}>
-                🚶 Shatapawali & Active Recovery
+                🚶 Active Recovery
               </h4>
               <p style={{ fontSize: "0.825rem", color: "var(--text-main)", margin: 0, lineHeight: 1.5 }}>
-                Post-dinner walks reduce visceral fat accumulation and normalize blood sugar naturally without straining connective tissues.
+                Low-intensity walks promote active recovery, maintain daily step targets, and support overall joint and metabolic health.
               </p>
             </div>
           </div>

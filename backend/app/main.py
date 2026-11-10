@@ -7,8 +7,8 @@ from .routers import auth, workouts, progress, goals, analytics, notifications, 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
-    title="FitTrack API – Fitness & Workout Management Platform",
-    description="Full-stack Fitness Tracking Platform API supporting authentication, workouts, daily progress, goals, analytics, workout scheduling, exercise library, streak tracking, and achievement badges.",
+    title="FitTrack API",
+    description="Fitness & Workout Tracking API",
     version="2.0.0"
 )
 
@@ -40,7 +40,7 @@ def root():
         "app": "FitTrack API",
         "status": "online",
         "documentation": "/docs",
-        "version": "1.0.0"
+        "version": "2.0.0"
     }
 
 @app.get("/api/health")

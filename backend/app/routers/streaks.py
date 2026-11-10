@@ -14,5 +14,4 @@ def get_user_streak(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Module 10: Get current streak, longest streak, and consistency milestone."""
     return get_streak_details(db=db, user_id=current_user.id)

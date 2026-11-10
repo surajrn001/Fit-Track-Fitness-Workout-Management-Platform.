@@ -13,6 +13,17 @@ import {
 
 const CATEGORIES = ["All", "Yoga", "Strength", "Cardio", "HIIT", "Walking", "Cycling", "Pilates"];
 
+const CATEGORY_LABELS = {
+  All: "All",
+  Yoga: "🧘 Yoga",
+  Strength: "🏋️ Strength",
+  Cardio: "🏃 Cardio",
+  HIIT: "⚡ HIIT",
+  Walking: "🚶 Walking",
+  Cycling: "🚴 Cycling",
+  Pilates: "🩰 Pilates",
+};
+
 export default function WorkoutsPage({
   workouts = [],
   loading = false,
@@ -182,7 +193,7 @@ export default function WorkoutsPage({
 
         {/* Category Pills with Dynamic Counts */}
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", borderTop: "1px solid var(--border-subtle)", paddingTop: 14 }}>
-          <span style={{ fontSize: "0.8rem", color: "var(--text-dim)", fontWeight: 600, marginRight: 6 }}>Discipline:</span>
+          <span style={{ fontSize: "0.8rem", color: "var(--text-dim)", fontWeight: 600, marginRight: 6 }}>Category:</span>
           {CATEGORIES.map((cat) => {
             const isSelected = selectedCategory === cat;
             const count = categoryCounts[cat] || 0;
@@ -205,7 +216,7 @@ export default function WorkoutsPage({
                   transition: "all var(--transition-fast)",
                 }}
               >
-                <span>{cat === "Yoga" ? "🧘 Yoga" : cat === "Strength" ? "🏋️ Strength" : cat === "Walking" ? "🚶 Walking" : cat}</span>
+                <span>{CATEGORY_LABELS[cat] || cat}</span>
                 <span
                   style={{
                     fontSize: "0.7rem",
