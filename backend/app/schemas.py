@@ -147,3 +147,127 @@ class MonthlyAnalyticsResponse(BaseModel):
     total_workouts: int
     daily_data: List[DailyTrend]
     categories: List[CategoryStat]
+
+# ----------------- PHASE 2 SCHEMAS -----------------
+
+# MODULE 7: Workout Plans & Scheduling
+class WorkoutPlanBase(BaseModel):
+    title: str = Field(..., min_length=2, max_length=200)
+    description: Optional[str] = None
+    scheduled_date: date
+
+class WorkoutPlanCreate(WorkoutPlanBase):
+    pass
+
+class WorkoutPlanUpdate(BaseModel):
+    title: Optional[str] = Field(None, min_length=2, max_length=200)
+    description: Optional[str] = None
+    scheduled_date: Optional[date] = None
+    is_completed: Optional[bool] = None
+
+class WorkoutPlanResponse(WorkoutPlanBase):
+    id: int
+    user_id: int
+    is_completed: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+# MODULE 8: Exercise Library
+class ExerciseBase(BaseModel):
+    name: str = Field(..., min_length=2, max_length=150)
+    category: str = Field(..., description="Cardio / Strength / Yoga")
+    description: Optional[str] = None
+    duration: int = Field(..., gt=0, description="Duration in minutes")
+    calories_est: float = Field(default=150.0, ge=0)
+    difficulty: str = Field(default="Intermediate")
+
+class ExerciseCreate(ExerciseBase):
+    pass
+
+class ExerciseResponse(ExerciseBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+class ExerciseLogRequest(BaseModel):
+    workout_date: Optional[date] = None
+    duration: Optional[int] = Field(None, gt=0)
+    calories_burned: Optional[float] = Field(None, ge=0)
+
+# MODULE 9: Progress Comparison
+class MetricComparison(BaseModel):
+    current: float
+    previous: float
+    change: float
+    pct_change: float
+    trend: str  # "up", "down", "same"
+
+class WeeklyComparisonResponse(BaseModel):
+    this_week: dict
+    last_week: dict
+    metrics: dict
+    insights: List[str]
+
+class MonthlyComparisonResponse(BaseModel):
+    this_month: dict
+    last_month: dict
+    metrics: dict
+    insights: List[str]
+
+# MODULE 10: Streak Tracking
+class StreakResponse(BaseModel):
+    user_id: int
+    current_streak: int
+    longest_streak: int
+    last_workout_date: Optional[date]
+    status: str            # "active", "at_risk", "resting"
+    next_milestone: int
+    days_to_milestone: int
+    streak_message: str
+
+    class Config:
+        from_attributes = True
+
+# MODULE 11: Achievement Badges
+class BadgeResponse(BaseModel):
+    id: int
+    name: str
+    description: str
+    icon: str
+    category: str
+    is_unlocked: bool = False
+    earned_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class UserBadgeResponse(BaseModel):
+    id: int
+    user_id: int
+    badge_id: int
+    earned_at: datetime
+    badge: BadgeResponse
+
+    class Config:
+        from_attributes = True
+
+# MODULE 12: Personalized Dashboard
+class PersonalizedDashboardResponse(BaseModel):
+    user: UserResponse
+    greeting: str
+    desi_shloka: dict
+    today_workouts: int
+    today_calories: float
+    today_duration: int
+    weekly_calories: float
+    monthly_calories: float
+    streak: StreakResponse
+    active_goals: List[GoalResponse]
+    upcoming_plans: List[WorkoutPlanResponse]
+    recent_badges: List[BadgeResponse]
+    total_badges_unlocked: int
+    weekly_improvement: Optional[str] = None
+

@@ -1,15 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
-from .routers import auth, workouts, progress, goals, analytics, notifications
+from .routers import auth, workouts, progress, goals, analytics, notifications, plans, exercises, streaks, badges
 
 # Initialize database tables
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="FitTrack API – Fitness & Workout Management Platform",
-    description="Full-stack Fitness Tracking Platform API supporting authentication, workouts, daily progress, goals, analytics, and notification alerts.",
-    version="1.0.0"
+    description="Full-stack Fitness Tracking Platform API supporting authentication, workouts, daily progress, goals, analytics, workout scheduling, exercise library, streak tracking, and achievement badges.",
+    version="2.0.0"
 )
 
 # Enable CORS for frontend development
@@ -28,6 +28,11 @@ app.include_router(progress.router)
 app.include_router(goals.router)
 app.include_router(analytics.router)
 app.include_router(notifications.router)
+app.include_router(plans.router)
+app.include_router(exercises.router)
+app.include_router(streaks.router)
+app.include_router(badges.router)
+
 
 @app.get("/")
 def root():

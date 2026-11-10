@@ -9,19 +9,29 @@ import {
   Calendar, 
   ChevronRight, 
   Award,
-  Sparkles
+  Sparkles,
+  CheckCircle2,
+  CalendarDays,
+  Zap
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 export default function DashboardPage({
   summary,
+  streak,
   todayWorkouts = [],
   activeGoals = [],
+  upcomingPlans = [],
+  recentBadges = [],
   weeklyAnalytics = null,
+  personalizedData = null,
   onOpenAddWorkout,
+  onOpenAddPlan,
   onNavigateTab,
   onDeleteWorkout,
   onEditWorkout,
+  onCompletePlan,
+  onOpenBadgePopup,
 }) {
   const { user } = useAuth();
   const todayDateStr = new Date().toLocaleDateString("en-IN", {
@@ -36,19 +46,45 @@ export default function DashboardPage({
   const todayPercent = Math.min(100, Math.round((todayCalories / dailyCalorieTarget) * 100));
 
   // Friendly human Indian name formatting
-  const displayName = user?.username ? user.username.split("_")[0].charAt(0).toUpperCase() + user.username.split("_")[0].slice(1) : "Athlete";
+  const displayName = user?.username
+    ? user.username.split("_")[0].charAt(0).toUpperCase() + user.username.split("_")[0].slice(1)
+    : "Athlete";
 
-  // Authentic rotating Indian wellness tips
-  const desiTips = [
-    { title: "Desi Post-Workout Nutrition", text: "Fuel muscle synthesis with a glass of sattu cooler, roasted chana, or fresh paneer. Natural, nutrient-dense & clean protein!" },
-    { title: "Shatapawali Routine", text: "Taking 1,000 gentle steps after dinner aids digestion, lowers glucose spikes, and sets up a restful night's sleep." },
-    { title: "Natural Rehydration", text: "Recharge electrolytes after heavy akhada lifting or a 5K run with tender coconut water (Nariyal Pani) and pinch of sendha namak." },
-  ];
-  const tip = desiTips[new Date().getDate() % desiTips.length];
+  // Use personalized greeting from backend or fallback
+  const greeting = personalizedData?.greeting || `Namaste, ${displayName}! 🙏`;
+  const shloka = personalizedData?.desi_shloka || {
+    sanskrit: "शरीरमाद्यं खलु धर्मसाधनम्",
+    english: "The physical body is the foremost instrument for fulfilling every purpose in life."
+  };
+
+  const streakStats = streak || personalizedData?.streak || {
+    current_streak: summary?.current_streak || 0,
+    longest_streak: summary?.current_streak || 0,
+    status: summary?.current_streak > 0 ? "active" : "resting",
+    streak_message: "Maintain consistency to build an unbroken training habit!",
+    next_milestone: 7,
+    days_to_milestone: Math.max(0, 7 - (summary?.current_streak || 0)),
+  };
+
+  const getBadgeIcon = (iconName) => {
+    switch (iconName) {
+      case "footprints": return "👣";
+      case "swords": return "⚔️";
+      case "trophy": return "🏆";
+      case "crown": return "👑";
+      case "flame": return "🔥";
+      case "zap": return "⚡";
+      case "award": return "🎖️";
+      case "target": return "🎯";
+      case "medal": return "🥇";
+      case "sparkles": return "✨";
+      default: return "🌟";
+    }
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
-      {/* Welcome Banner */}
+      {/* Module 12: Personalized Welcome Banner */}
       <div
         className="glass-card"
         style={{
@@ -66,48 +102,93 @@ export default function DashboardPage({
           <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#fb923c", fontSize: "0.825rem", fontWeight: 700, marginBottom: 4 }}>
             <Calendar size={14} /> {todayDateStr} • <span style={{ color: "var(--emerald-primary)" }}>Fit India Movement 🇮🇳</span>
           </div>
-          <h1 style={{ fontSize: "2.1rem", margin: "4px 0 6px 0" }}>
-            Namaste, <span className="text-gradient">{displayName}</span>! 🙏
+          <h1 style={{ fontSize: "2.1rem", margin: "4px 0 6px 0", fontFamily: "var(--font-display)" }}>
+            {greeting}
           </h1>
-          <p style={{ color: "var(--text-muted)", fontSize: "0.925rem", margin: 0, maxWidth: 680, lineHeight: 1.5 }}>
-            <em>"Shariram Madhyam Khalu Dharma Sadhanam"</em> — The body is the foremost instrument for all life's pursuits.
-            {summary?.current_streak > 0
-              ? ` You are on an impressive ${summary.current_streak}-day workout streak! Keep the flame burning.`
-              : " Energize your day! Log your session now to start a winning streak."}
+          <p style={{ color: "var(--text-muted)", fontSize: "0.925rem", margin: 0, maxWidth: 720, lineHeight: 1.6 }}>
+            <strong style={{ color: "#fbbf24", fontStyle: "italic" }}>"{shloka.sanskrit}"</strong> — {shloka.english}
           </p>
         </div>
 
-        <div style={{ display: "flex", gap: 12 }}>
-          <button onClick={onOpenAddWorkout} className="btn btn-primary" style={{ padding: "12px 22px" }}>
-            <Plus size={18} strokeWidth={2.5} /> + Log Today's Workout
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+          <button onClick={onOpenAddWorkout} className="btn-primary" style={{ padding: "12px 20px", display: "flex", alignItems: "center", gap: 8 }}>
+            <Plus size={18} strokeWidth={2.5} /> Log Workout
+          </button>
+          <button onClick={onOpenAddPlan} className="btn-secondary" style={{ padding: "12px 18px", display: "flex", alignItems: "center", gap: 8 }}>
+            <CalendarDays size={18} /> Schedule Next
           </button>
         </div>
       </div>
 
-      {/* KPI Cards */}
+      {/* Module 10: Streak Tracking Banner */}
       <div
+        className="glass-card"
         style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-          gap: 20,
+          padding: "20px 26px",
+          background: "linear-gradient(135deg, rgba(249, 115, 22, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%)",
+          border: "1px solid rgba(249, 115, 22, 0.35)",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 16,
         }}
       >
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <div
+            style={{
+              width: 54,
+              height: 54,
+              borderRadius: 16,
+              background: "rgba(249, 115, 22, 0.2)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Flame size={32} className={streakStats.current_streak > 0 ? "flame-active" : ""} />
+          </div>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: "1.35rem", fontWeight: 800 }}>
+                {streakStats.current_streak} Day Active Streak 🔥
+              </span>
+              <span
+                style={{
+                  fontSize: "0.75rem",
+                  fontWeight: 700,
+                  padding: "2px 8px",
+                  borderRadius: 6,
+                  background: streakStats.status === "active" ? "rgba(16, 185, 129, 0.2)" : "rgba(245, 158, 11, 0.2)",
+                  color: streakStats.status === "active" ? "#34d399" : "#fbbf24",
+                }}
+              >
+                {streakStats.status === "active" ? "Ablaze Today" : "Pending Workout Today"}
+              </span>
+            </div>
+            <p style={{ margin: "2px 0 0", fontSize: "0.85rem", color: "var(--text-muted)" }}>
+              {streakStats.streak_message} • Longest Streak: <strong>{streakStats.longest_streak} days</strong>
+            </p>
+          </div>
+        </div>
+
+        {streakStats.days_to_milestone > 0 && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255, 255, 255, 0.05)", padding: "8px 14px", borderRadius: 10 }}>
+            <Award size={18} color="#fbbf24" />
+            <span style={{ fontSize: "0.825rem", color: "var(--text-main)" }}>
+              <strong>{streakStats.days_to_milestone} days</strong> to {streakStats.next_milestone}-Day Milestone Badge!
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* KPI Cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 20 }}>
         {/* Today's Calories */}
         <div className="glass-card" style={{ padding: "22px 24px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
             <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-muted)" }}>Today's Energy Output</span>
-            <div
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 10,
-                background: "rgba(249, 115, 22, 0.15)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#f97316",
-              }}
-            >
+            <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(249, 115, 22, 0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#f97316" }}>
               <Flame size={20} />
             </div>
           </div>
@@ -138,18 +219,7 @@ export default function DashboardPage({
         <div className="glass-card" style={{ padding: "22px 24px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
             <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-muted)" }}>Today's Sessions</span>
-            <div
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 10,
-                background: "rgba(16, 185, 129, 0.15)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "var(--emerald-primary)",
-              }}
-            >
+            <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(16, 185, 129, 0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--emerald-primary)" }}>
               <Dumbbell size={20} />
             </div>
           </div>
@@ -167,52 +237,30 @@ export default function DashboardPage({
           </div>
         </div>
 
-        {/* Workout Streak */}
+        {/* Longest & Habit Index */}
         <div className="glass-card" style={{ padding: "22px 24px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
-            <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-muted)" }}>Unbroken Streak</span>
-            <div
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 10,
-                background: "rgba(239, 68, 68, 0.15)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#ef4444",
-              }}
-            >
+            <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-muted)" }}>Discipline & Badges</span>
+            <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(245, 158, 11, 0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fbbf24" }}>
               <Award size={20} />
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 10 }}>
-            <span style={{ fontSize: "2rem", fontWeight: 800, fontFamily: "var(--font-display)", color: "#fb923c" }}>
-              {summary?.current_streak || 0}
+            <span style={{ fontSize: "2rem", fontWeight: 800, fontFamily: "var(--font-display)", color: "#fbbf24" }}>
+              {personalizedData?.total_badges_unlocked || recentBadges.length}
             </span>
-            <span style={{ fontSize: "0.9rem", color: "var(--text-dim)" }}>days active</span>
+            <span style={{ fontSize: "0.9rem", color: "var(--text-dim)" }}>honors unlocked</span>
           </div>
-          <div style={{ fontSize: "0.8rem", color: "var(--text-dim)" }}>
-            {summary?.current_streak > 3 ? "🔥 Zabardast consistency! Keep it going." : "Work out daily to build your active habit."}
-          </div>
+          <button onClick={() => onNavigateTab("badges")} className="btn-ghost" style={{ padding: 0, fontSize: "0.8rem", color: "#fbbf24", cursor: "pointer", border: "none" }}>
+            View Badge Collection →
+          </button>
         </div>
 
-        {/* Weekly Calories */}
+        {/* Weekly Calories Burn with Trend */}
         <div className="glass-card" style={{ padding: "22px 24px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
-            <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-muted)" }}>7-Day Total Burn</span>
-            <div
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 10,
-                background: "rgba(99, 102, 241, 0.15)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "var(--indigo-accent)",
-              }}
-            >
+            <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-muted)" }}>Weekly Output</span>
+            <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(99, 102, 241, 0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--indigo-accent)" }}>
               <TrendingUp size={20} />
             </div>
           </div>
@@ -223,34 +271,96 @@ export default function DashboardPage({
             <span style={{ fontSize: "0.9rem", color: "var(--text-dim)" }}>kcal</span>
           </div>
           <div style={{ fontSize: "0.8rem", color: "var(--cyan-accent)" }}>
-            Monthly burn: {Math.round(summary?.monthly_calories || 0).toLocaleString()} kcal
+            {personalizedData?.weekly_improvement || "Active momentum building up!"}
           </div>
         </div>
       </div>
 
-      {/* Desi Nutrition & Health Tip Callout */}
-      <div
-        style={{
-          padding: "16px 20px",
-          borderRadius: 14,
-          background: "rgba(16, 185, 129, 0.08)",
-          border: "1px solid rgba(16, 185, 129, 0.25)",
-          display: "flex",
-          alignItems: "center",
-          gap: 14,
-        }}
-      >
-        <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(16, 185, 129, 0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--emerald-primary)", flexShrink: 0 }}>
-          <Sparkles size={20} />
+      {/* Module 7: Upcoming Scheduled Workouts Widget */}
+      <div className="glass-card" style={{ padding: "26px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(59, 130, 246, 0.15)", color: "#60a5fa", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <CalendarDays size={20} />
+            </div>
+            <div>
+              <h3 style={{ fontSize: "1.2rem", fontWeight: 700, margin: 0 }}>Upcoming Scheduled Workouts</h3>
+              <span style={{ fontSize: "0.8rem", color: "var(--text-dim)" }}>Next 7 days from your training calendar</span>
+            </div>
+          </div>
+          <button onClick={() => onNavigateTab("schedule")} className="btn-ghost" style={{ fontSize: "0.85rem", cursor: "pointer", border: "none" }}>
+            Open Calendar <ChevronRight size={14} />
+          </button>
         </div>
-        <div style={{ flex: 1 }}>
-          <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--emerald-primary)", display: "block" }}>
-            💡 {tip.title}
-          </span>
-          <span style={{ fontSize: "0.825rem", color: "var(--text-main)" }}>
-            {tip.text}
-          </span>
-        </div>
+
+        {upcomingPlans.length === 0 ? (
+          <div style={{ padding: "24px", textAlign: "center", border: "1px dashed var(--border-subtle)", borderRadius: 12 }}>
+            <p style={{ fontSize: "0.9rem", color: "var(--text-muted)", margin: "0 0 12px 0" }}>
+              No workouts scheduled for the upcoming week. Plan ahead for disciplined execution!
+            </p>
+            <button onClick={onOpenAddPlan} className="btn-primary" style={{ padding: "8px 16px", fontSize: "0.85rem" }}>
+              + Schedule Future Workout
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>
+            {upcomingPlans.slice(0, 3).map((plan) => {
+              const formattedDate = new Date(plan.scheduled_date).toLocaleDateString("en-IN", {
+                weekday: "short",
+                day: "numeric",
+                month: "short"
+              });
+              return (
+                <div
+                  key={plan.id}
+                  style={{
+                    padding: "16px",
+                    borderRadius: 12,
+                    background: "rgba(255, 255, 255, 0.03)",
+                    border: "1px solid var(--border-subtle)",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    gap: 12,
+                  }}
+                >
+                  <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                      <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--emerald-primary)", textTransform: "uppercase" }}>
+                        {formattedDate}
+                      </span>
+                    </div>
+                    <h4 style={{ fontSize: "1rem", fontWeight: 700, margin: "0 0 4px 0", color: "var(--text-main)" }}>
+                      {plan.title}
+                    </h4>
+                    {plan.description && (
+                      <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", margin: 0, lineHeight: 1.4 }}>
+                        {plan.description}
+                      </p>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => onCompletePlan(plan.id)}
+                    className="btn-secondary"
+                    style={{
+                      width: "100%",
+                      padding: "6px 12px",
+                      fontSize: "0.8rem",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6,
+                    }}
+                  >
+                    <CheckCircle2 size={14} color="var(--emerald-primary)" />
+                    Complete & Log Now
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Main Grid: Today's Workouts + Goals Snapshot */}
@@ -262,7 +372,7 @@ export default function DashboardPage({
               <h3 style={{ fontSize: "1.2rem", margin: 0 }}>Today's Activities</h3>
               <span style={{ fontSize: "0.8rem", color: "var(--text-dim)" }}>Your logged exercises for today</span>
             </div>
-            <button onClick={() => onNavigateTab("workouts")} className="btn-ghost btn-sm" style={{ cursor: "pointer", border: "none" }}>
+            <button onClick={() => onNavigateTab("workouts")} className="btn-ghost" style={{ cursor: "pointer", border: "none" }}>
               View All <ChevronRight size={14} />
             </button>
           </div>
@@ -274,7 +384,7 @@ export default function DashboardPage({
               <p style={{ fontSize: "0.825rem", color: "var(--text-muted)", margin: "0 0 16px 0" }}>
                 Add your morning Surya Namaskar, Akhada lift, or evening walk to boost today's stats!
               </p>
-              <button onClick={onOpenAddWorkout} className="btn btn-primary btn-sm">
+              <button onClick={onOpenAddWorkout} className="btn-primary" style={{ padding: "8px 16px" }}>
                 <Plus size={14} /> Log Workout Now
               </button>
             </div>
@@ -307,8 +417,8 @@ export default function DashboardPage({
                   </div>
 
                   <div style={{ display: "flex", gap: 6 }}>
-                    <button onClick={() => onEditWorkout(w)} className="btn-secondary btn-sm">Edit</button>
-                    <button onClick={() => onDeleteWorkout(w.id)} className="btn-danger btn-sm">Delete</button>
+                    <button onClick={() => onEditWorkout(w)} className="btn-secondary" style={{ padding: "4px 8px", fontSize: "0.75rem" }}>Edit</button>
+                    <button onClick={() => onDeleteWorkout(w.id)} className="btn-secondary" style={{ padding: "4px 8px", fontSize: "0.75rem", color: "#fca5a5" }}>Delete</button>
                   </div>
                 </div>
               ))}
@@ -323,7 +433,7 @@ export default function DashboardPage({
               <h3 style={{ fontSize: "1.2rem", margin: 0 }}>Active Fitness Goals</h3>
               <span style={{ fontSize: "0.8rem", color: "var(--text-dim)" }}>Your current targets</span>
             </div>
-            <button onClick={() => onNavigateTab("goals")} className="btn-ghost btn-sm" style={{ cursor: "pointer", border: "none" }}>
+            <button onClick={() => onNavigateTab("goals")} className="btn-ghost" style={{ cursor: "pointer", border: "none" }}>
               Manage Goals <ChevronRight size={14} />
             </button>
           </div>
@@ -335,7 +445,7 @@ export default function DashboardPage({
               <p style={{ fontSize: "0.825rem", color: "var(--text-muted)", margin: "0 0 16px 0" }}>
                 Set a wedding season goal, calorie burn milestone, or 10k daily steps!
               </p>
-              <button onClick={() => onNavigateTab("goals")} className="btn btn-primary btn-sm">
+              <button onClick={() => onNavigateTab("goals")} className="btn-primary" style={{ padding: "8px 16px" }}>
                 Set a Goal
               </button>
             </div>
@@ -383,50 +493,43 @@ export default function DashboardPage({
         </div>
       </div>
 
-      {/* Weekly Calorie Burn Preview Bar Graph */}
-      {weeklyAnalytics && weeklyAnalytics.days && (
-        <div className="glass-card" style={{ padding: "26px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-            <div>
-              <h3 style={{ fontSize: "1.2rem", margin: 0 }}>Weekly Calorie Burn Distribution</h3>
-              <span style={{ fontSize: "0.8rem", color: "var(--text-dim)" }}>Energy expenditure over the past 7 days</span>
+      {/* Module 11: Recent Badges Showcase Banner */}
+      {recentBadges.length > 0 && (
+        <div className="glass-card" style={{ padding: "24px 28px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <Award size={20} color="#fbbf24" />
+              <h3 style={{ fontSize: "1.15rem", fontWeight: 700, margin: 0 }}>Recent Honors & Badges Unlocked</h3>
             </div>
-            <button onClick={() => onNavigateTab("analytics")} className="btn-ghost btn-sm" style={{ cursor: "pointer", border: "none" }}>
-              Full Analytics <ChevronRight size={14} />
+            <button onClick={() => onNavigateTab("badges")} className="btn-ghost" style={{ fontSize: "0.85rem", cursor: "pointer", border: "none" }}>
+              View All ({personalizedData?.total_badges_unlocked || recentBadges.length}) <ChevronRight size={14} />
             </button>
           </div>
 
-          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", height: 160, gap: 12, padding: "10px 10px 0 10px" }}>
-            {weeklyAnalytics.days.map((d, idx) => {
-              const maxCal = Math.max(1, ...weeklyAnalytics.days.map((item) => item.calories));
-              const heightPercent = Math.max(8, Math.round((d.calories / maxCal) * 100));
-              const isToday = idx === weeklyAnalytics.days.length - 1;
-
-              return (
-                <div key={idx} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", height: "100%", justifyContent: "flex-end", gap: 8 }}>
-                  <span style={{ fontSize: "0.75rem", color: isToday ? "#fb923c" : "var(--text-dim)", fontWeight: 600 }}>
-                    {Math.round(d.calories)}
-                  </span>
-                  <div
-                    style={{
-                      width: "100%",
-                      maxWidth: 42,
-                      height: `${heightPercent}%`,
-                      borderRadius: "6px 6px 2px 2px",
-                      background: isToday
-                        ? "linear-gradient(180deg, #f97316 0%, #10b981 100%)"
-                        : "linear-gradient(180deg, rgba(99, 102, 241, 0.7) 0%, rgba(99, 102, 241, 0.2) 100%)",
-                      boxShadow: isToday ? "0 0 15px rgba(249, 115, 22, 0.4)" : "none",
-                      transition: "height 300ms ease",
-                    }}
-                    title={`${d.day_name}: ${d.calories} kcal (${d.duration} mins)`}
-                  />
-                  <span style={{ fontSize: "0.8rem", fontWeight: isToday ? 700 : 500, color: isToday ? "#fff" : "var(--text-muted)" }}>
-                    {d.day_name}
-                  </span>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 14 }}>
+            {recentBadges.map((b) => (
+              <div
+                key={b.id}
+                onClick={() => onOpenBadgePopup && onOpenBadgePopup(b)}
+                style={{
+                  padding: "14px 16px",
+                  borderRadius: 12,
+                  background: "linear-gradient(180deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)",
+                  border: "1px solid rgba(245, 158, 11, 0.3)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  cursor: "pointer",
+                  transition: "all var(--transition-fast)",
+                }}
+              >
+                <div style={{ fontSize: "1.8rem" }}>{getBadgeIcon(b.icon)}</div>
+                <div>
+                  <h4 style={{ fontSize: "0.9rem", fontWeight: 700, margin: 0, color: "var(--text-main)" }}>{b.name}</h4>
+                  <span style={{ fontSize: "0.75rem", color: "#fbbf24" }}>Unlocked 🏆</span>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         </div>
       )}

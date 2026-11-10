@@ -62,6 +62,59 @@ FitTrack is a full-stack fitness and workout tracking web platform designed to h
 
 ---
 
+## 🚀 PHASE 2: Advanced Tracking & User Engagement
+
+### 7. Workout Plans & Scheduling (Module 7)
+- **Features**:
+  - Create workout plans and schedule training sessions for future dates
+  - Interactive 14-day rolling mini calendar strip with visual workout counters
+  - 1-Click "Mark Completed & Log Workout" which marks the plan finished and records it into workout history
+  - Filter plans by Upcoming, All, and Completed views
+  - Modal with quick suggestions for traditional Indian workouts
+
+### 8. Predefined Exercise Library (Module 8)
+- **Features**:
+  - Comprehensive exercise catalog across Cardio, Strength, and Yoga
+  - Traditional Indian workouts (Surya Namaskar Sprint, Akhada Baithaks, Akhada Dands, Shatapawali, Mudgar 360 Revolutions, Pranayama)
+  - Real-time search by exercise name and description
+  - Category filtering (Cardio, Strength, Yoga)
+  - 1-Click "Log Workout" modal with duration and estimated calorie burn calculation
+  - 1-Click "Schedule to Calendar" modal
+
+### 9. Progress Comparison & Velocity (Module 9)
+- **Features**:
+  - Weekly comparison (current 7 days vs previous 7 days)
+  - Monthly comparison (last 30 days vs prior 30 days)
+  - Visual trend pills indicating improvement percentages (e.g., `+40.1%` calories burned, workout volume increase)
+  - Side-by-side benchmark comparison cards with gradient visual progress bars
+  - Automated coaching insights tailored for consistent habit building
+
+### 10. Streak Tracking System (Module 10)
+- **Features**:
+  - Dedicated `streak` database table persisting `current_streak`, `longest_streak`, and `last_workout_date`
+  - Animated flame icon (`flame-active`) rendered in the dashboard and live navbar badge
+  - Next milestone countdown (e.g., "2 days to 7-Day Sadhana Streak!")
+  - Automatic streak maintenance on daily workout logging and reset logic on missed days
+
+### 11. Achievement Badges & Honors (Module 11)
+- **Features**:
+  - Dedicated `badges` and `user_badges` tables
+  - Badges awarded dynamically for completing workouts, maintaining streaks, achieving goals, and burning total calories
+  - Badges include: *Pehla Kadam*, *Warrior in the Making*, *Akhada Champion*, *Centurion Athlete*, *Agni Streak*, *Sadhana Streak*, *Tapasya Master*, *Goal Getter*, *Fit India Icon*, *10,000 Kcal Burner*
+  - Badges Hall of Honors showcase with progress bar
+  - Celebratory Achievement Popup modal with badge aura upon clicking unlocked or locked badges
+
+### 12. Personalized Dashboard (Module 12)
+- **Features**:
+  - Dynamic time-of-day greeting in Hindi and English (Shubh Prabhat / Namaste / Shubh Sandhya / Shubh Ratri)
+  - Sanskrit Shloka of the Day with authentic English translations
+  - Live Streak flame status card with countdown to next honor
+  - Upcoming scheduled workouts widget with direct complete-and-log actions
+  - Active goals progress meters with percentage bars
+  - Recent honors showcase displaying unlocked achievement badges
+
+---
+
 ## 🏗️ Architecture & Database Schema
 
 ### Database Tables (SQLite + SQLAlchemy ORM)
@@ -70,6 +123,11 @@ FitTrack is a full-stack fitness and workout tracking web platform designed to h
 - **`progress`**: `id`, `user_id` (FK), `total_workouts`, `total_calories`, `date`
 - **`goals`**: `id`, `user_id` (FK), `goal_type`, `target_value`, `current_value`, `deadline`, `is_completed`, `created_at`
 - **`notifications`**: `id`, `user_id` (FK), `title`, `message`, `is_read`, `created_at`
+- **`workout_plans` (Phase 2)**: `id`, `user_id` (FK), `title`, `description`, `scheduled_date`, `is_completed`, `created_at`
+- **`exercises` (Phase 2)**: `id`, `name`, `category`, `description`, `duration`, `calories_est`, `difficulty`
+- **`streak` (Phase 2)**: `id`, `user_id` (FK), `current_streak`, `longest_streak`, `last_workout_date`
+- **`badges` (Phase 2)**: `id`, `name`, `description`, `icon`, `category`, `condition_type`, `condition_value`
+- **`user_badges` (Phase 2)**: `id`, `user_id` (FK), `badge_id` (FK), `earned_at`
 
 ---
 

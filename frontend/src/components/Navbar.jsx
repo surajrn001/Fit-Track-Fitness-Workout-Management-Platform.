@@ -9,12 +9,27 @@ import {
   Bell, 
   LogOut, 
   Menu,
-  X
+  X,
+  CalendarDays,
+  BookOpen,
+  TrendingUp,
+  Award,
+  Flame
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import NotificationsDropdown from "./NotificationsDropdown";
 
-export default function Navbar({ activeTab, setActiveTab, onOpenAddWorkout, notifications = [], unreadCount = 0, onMarkRead, onMarkAllRead, onDeleteNotification }) {
+export default function Navbar({ 
+  activeTab, 
+  setActiveTab, 
+  onOpenAddWorkout, 
+  notifications = [], 
+  unreadCount = 0, 
+  onMarkRead, 
+  onMarkAllRead, 
+  onDeleteNotification,
+  currentStreak = 0
+}) {
   const { user, logout } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -34,10 +49,15 @@ export default function Navbar({ activeTab, setActiveTab, onOpenAddWorkout, noti
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: Activity },
     { id: "workouts", label: "Workouts", icon: Dumbbell },
-    { id: "progress", label: "Daily Progress", icon: Calendar },
-    { id: "goals", label: "Fitness Goals", icon: Target },
-    { id: "analytics", label: "Analytics & Reports", icon: BarChart3 },
+    { id: "schedule", label: "Schedule", icon: CalendarDays },
+    { id: "exercises", label: "Library", icon: BookOpen },
+    { id: "progress", label: "Progress", icon: Calendar },
+    { id: "comparison", label: "Comparison", icon: TrendingUp },
+    { id: "goals", label: "Goals", icon: Target },
+    { id: "badges", label: "Badges", icon: Award },
+    { id: "analytics", label: "Analytics", icon: BarChart3 },
   ];
+
 
   return (
     <header
@@ -156,6 +176,29 @@ export default function Navbar({ activeTab, setActiveTab, onOpenAddWorkout, noti
 
         {/* Right Actions */}
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {/* Live Streak Pill */}
+          <div
+            onClick={() => setActiveTab("dashboard")}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "6px 12px",
+              borderRadius: 10,
+              background: "rgba(249, 115, 22, 0.12)",
+              border: "1px solid rgba(249, 115, 22, 0.3)",
+              color: "#fb923c",
+              fontSize: "0.825rem",
+              fontWeight: 800,
+              cursor: "pointer",
+              userSelect: "none",
+            }}
+            title="Current Workout Streak"
+          >
+            <Flame size={16} className={currentStreak > 0 ? "flame-active" : ""} />
+            <span>{currentStreak}d Streak</span>
+          </div>
+
           {/* Quick Log Workout */}
           <button
             onClick={onOpenAddWorkout}
@@ -164,11 +207,12 @@ export default function Navbar({ activeTab, setActiveTab, onOpenAddWorkout, noti
             id="quick-log-btn"
           >
             <Plus size={16} strokeWidth={2.5} />
-            <span>+ Log Workout</span>
+            <span>+ Log</span>
           </button>
 
           {/* Notifications Bell */}
           <div style={{ position: "relative" }} ref={notifRef}>
+
             <button
               onClick={() => setShowNotifications(!showNotifications)}
               className="btn-secondary"
@@ -339,12 +383,12 @@ export default function Navbar({ activeTab, setActiveTab, onOpenAddWorkout, noti
       )}
 
       <style>{`
-        @media (min-width: 880px) {
+        @media (min-width: 1100px) {
           .desktop-nav { display: flex !important; }
           #quick-log-btn { display: inline-flex !important; }
           .mobile-menu-btn { display: none !important; }
         }
-        @media (max-width: 879px) {
+        @media (max-width: 1099px) {
           .mobile-menu-btn { display: block !important; }
         }
       `}</style>

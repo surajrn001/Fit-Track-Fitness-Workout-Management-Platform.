@@ -78,4 +78,45 @@ export const api = {
   markNotificationRead: (id) => request(`/notifications/${id}/read`, { method: "PATCH" }),
   markAllNotificationsRead: () => request("/notifications/read-all", { method: "POST" }),
   deleteNotification: (id) => request(`/notifications/${id}`, { method: "DELETE" }),
+
+  // Phase 2: Streak Tracking (Module 10)
+  getStreak: () => request("/streak/"),
+
+  // Phase 2: Achievement Badges (Module 11)
+  getBadges: () => request("/badges/"),
+  checkBadges: () => request("/badges/check", { method: "POST" }),
+
+  // Phase 2: Workout Plans & Scheduling (Module 7)
+  getWorkoutPlans: (params = {}) => {
+    const searchParams = new URLSearchParams();
+    if (params.start_date) searchParams.append("start_date", params.start_date);
+    if (params.end_date) searchParams.append("end_date", params.end_date);
+    if (params.upcoming_only) searchParams.append("upcoming_only", "true");
+    const query = searchParams.toString();
+    return request(`/plans/${query ? `?${query}` : ""}`);
+  },
+  createWorkoutPlan: (payload) => request("/plans/", { method: "POST", body: JSON.stringify(payload) }),
+  updateWorkoutPlan: (id, payload) => request(`/plans/${id}`, { method: "PUT", body: JSON.stringify(payload) }),
+  deleteWorkoutPlan: (id) => request(`/plans/${id}`, { method: "DELETE" }),
+  completeWorkoutPlan: (id) => request(`/plans/${id}/complete`, { method: "POST" }),
+
+  // Phase 2: Exercise Library (Module 8)
+  getExercises: (params = {}) => {
+    const searchParams = new URLSearchParams();
+    if (params.category && params.category !== "All") searchParams.append("category", params.category);
+    if (params.search) searchParams.append("search", params.search);
+    const query = searchParams.toString();
+    return request(`/exercises/${query ? `?${query}` : ""}`);
+  },
+  getExercise: (id) => request(`/exercises/${id}`),
+  logExercise: (id, payload = {}) => request(`/exercises/${id}/log`, { method: "POST", body: JSON.stringify(payload) }),
+  scheduleExercise: (id, payload) => request(`/exercises/${id}/schedule`, { method: "POST", body: JSON.stringify(payload) }),
+
+  // Phase 2: Progress Comparison (Module 9)
+  getWeeklyComparison: () => request("/progress/comparison/weekly"),
+  getMonthlyComparison: () => request("/progress/comparison/monthly"),
+
+  // Phase 2: Personalized Dashboard (Module 12)
+  getPersonalizedDashboard: () => request("/progress/personalized"),
 };
+

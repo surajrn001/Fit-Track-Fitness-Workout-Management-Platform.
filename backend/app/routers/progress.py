@@ -6,9 +6,17 @@ from sqlalchemy import desc
 
 from ..database import get_db
 from ..models import User, Progress, Workout
-from ..schemas import ProgressResponse, DashboardSummaryResponse
+from ..schemas import (
+    ProgressResponse, DashboardSummaryResponse,
+    WeeklyComparisonResponse, MonthlyComparisonResponse,
+    PersonalizedDashboardResponse
+)
 from ..security import get_current_user
-from ..crud import get_dashboard_summary, sync_daily_progress
+from ..crud import (
+    get_dashboard_summary, sync_daily_progress,
+    get_weekly_comparison, get_monthly_comparison,
+    get_personalized_dashboard_data
+)
 
 router = APIRouter(prefix="/api/progress", tags=["Daily Progress"])
 
@@ -44,6 +52,30 @@ def get_today_progress(
     record = sync_daily_progress(db=db, user_id=current_user.id, target_date=today)
     return record
 
+@router.get("/comparison/weekly", response_model=WeeklyComparisonResponse)
+def get_user_weekly_comparison(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Module 9: Compare weekly progress (this week vs last week with improvement trends)."""
+    return get_weekly_comparison(db=db, user_id=current_user.id)
+
+@router.get("/comparison/monthly", response_model=MonthlyComparisonResponse)
+def get_user_monthly_comparison(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Module 9: Compare monthly stats (last 30 days vs prior 30 days with trends)."""
+    return get_monthly_comparison(db=db, user_id=current_user.id)
+
+@router.get("/personalized", response_model=PersonalizedDashboardResponse)
+def get_personalized_dashboard(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Module 12: Unified personalized dashboard payload with streak, goals, plans, and greetings."""
+    return get_personalized_dashboard_data(db=db, user=current_user)
+
 @router.post("/sync-all")
 def resync_all_user_progress(
     db: Session = Depends(get_db),
@@ -60,3 +92,4 @@ def resync_all_user_progress(
         synced_count += 1
 
     return {"detail": f"Successfully synchronized {synced_count} progress days"}
+
