@@ -11,7 +11,7 @@ import {
   Sparkles,
   ChevronLeft,
   ChevronRight,
-  AlertCircle
+  Filter
 } from "lucide-react";
 
 export default function SchedulePage({ 
@@ -21,13 +21,38 @@ export default function SchedulePage({
   onDeletePlan, 
   onCompletePlan 
 }) {
-  const [filterMode, setFilterMode] = useState("upcoming"); // "upcoming", "all", "completed"
+  const [filterMode, setFilterMode] = useState("upcoming"); // "upcoming", "all", "completed", "date"
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
+  const [filterBySelectedDateOnly, setFilterBySelectedDateOnly] = useState(false);
 
   const todayStr = new Date().toISOString().split("T")[0];
 
+  // Helper date calculators
+  const getTomorrowStr = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split("T")[0];
+  };
+
+  const getWeekendStr = () => {
+    const d = new Date();
+    const day = d.getDay();
+    const diff = (6 - day + 7) % 7 || 7; // next Saturday
+    d.setDate(d.getDate() + diff);
+    return d.toISOString().split("T")[0];
+  };
+
+  const getNextWeekStr = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    return d.toISOString().split("T")[0];
+  };
+
   // Filter plans based on view
   const filteredPlans = plans.filter((p) => {
+    if (filterBySelectedDateOnly) {
+      return p.scheduled_date === selectedDate;
+    }
     if (filterMode === "upcoming") return !p.is_completed && p.scheduled_date >= todayStr;
     if (filterMode === "completed") return p.is_completed;
     return true;
@@ -37,8 +62,8 @@ export default function SchedulePage({
   const generateTwoWeeks = () => {
     const days = [];
     const base = new Date();
-    // Start 3 days before today
-    base.setDate(base.getDate() - 3);
+    // Start 2 days before today
+    base.setDate(base.getDate() - 2);
 
     for (let i = 0; i < 14; i++) {
       const d = new Date(base);
@@ -60,8 +85,10 @@ export default function SchedulePage({
 
   const rollingDays = generateTwoWeeks();
 
-  // Group plans for display
-  const plansForSelectedDate = plans.filter((p) => p.scheduled_date === selectedDate);
+  const handleSelectDay = (iso) => {
+    setSelectedDate(iso);
+    setFilterBySelectedDateOnly(true);
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
@@ -89,29 +116,87 @@ export default function SchedulePage({
 
       {/* 14-Day Calendar Strip */}
       <div className="glass-card" style={{ padding: "20px 24px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, flexWrap: "wrap", gap: 10 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <CalendarDays size={18} color="var(--emerald-primary)" />
             <span style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--text-main)" }}>
               Interactive 14-Day Calendar Strip
             </span>
+            {filterBySelectedDateOnly && (
+              <span
+                style={{
+                  fontSize: "0.75rem",
+                  color: "#fb923c",
+                  background: "rgba(249, 115, 22, 0.15)",
+                  padding: "2px 8px",
+                  borderRadius: 6,
+                }}
+              >
+                Filtered by Day
+              </span>
+            )}
           </div>
-          <span style={{ fontSize: "0.8rem", color: "var(--text-dim)" }}>
-            Selected: <strong style={{ color: "var(--emerald-primary)" }}>{new Date(selectedDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</strong>
-          </span>
+
+          {/* Quick Date Jumper Pills */}
+          <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+            <span style={{ fontSize: "0.775rem", color: "var(--text-dim)" }}>Jump to:</span>
+            <button
+              onClick={() => handleSelectDay(todayStr)}
+              className="btn-secondary"
+              style={{
+                padding: "3px 8px",
+                fontSize: "0.75rem",
+                borderRadius: 6,
+                background: selectedDate === todayStr && filterBySelectedDateOnly ? "rgba(16, 185, 129, 0.2)" : undefined,
+                color: selectedDate === todayStr && filterBySelectedDateOnly ? "var(--emerald-primary)" : undefined,
+              }}
+            >
+              Today
+            </button>
+            <button
+              onClick={() => handleSelectDay(getTomorrowStr())}
+              className="btn-secondary"
+              style={{ padding: "3px 8px", fontSize: "0.75rem", borderRadius: 6 }}
+            >
+              Tomorrow
+            </button>
+            <button
+              onClick={() => handleSelectDay(getWeekendStr())}
+              className="btn-secondary"
+              style={{ padding: "3px 8px", fontSize: "0.75rem", borderRadius: 6 }}
+            >
+              Weekend
+            </button>
+            <button
+              onClick={() => handleSelectDay(getNextWeekStr())}
+              className="btn-secondary"
+              style={{ padding: "3px 8px", fontSize: "0.75rem", borderRadius: 6 }}
+            >
+              +7 Days
+            </button>
+            {filterBySelectedDateOnly && (
+              <button
+                onClick={() => setFilterBySelectedDateOnly(false)}
+                className="btn-ghost"
+                style={{ padding: "3px 8px", fontSize: "0.75rem", color: "var(--text-muted)" }}
+              >
+                Show All
+              </button>
+            )}
+          </div>
         </div>
 
         <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 6 }}>
           {rollingDays.map((day) => {
-            const isSelected = day.isoStr === selectedDate;
+            const isSelected = day.isoStr === selectedDate && filterBySelectedDateOnly;
             return (
               <button
                 key={day.isoStr}
-                onClick={() => setSelectedDate(day.isoStr)}
+                onClick={() => handleSelectDay(day.isoStr)}
                 style={{
                   flex: "0 0 calc(100% / 7 - 8px)",
-                  minWidth: 80,
-                  padding: "12px 8px",
+                  minWidth: 76,
+                  padding: "12px 6px",
                   borderRadius: 12,
                   border: isSelected
                     ? "2px solid var(--emerald-primary)"
@@ -119,32 +204,33 @@ export default function SchedulePage({
                     ? "1px solid rgba(16, 185, 129, 0.4)"
                     : "1px solid var(--border-subtle)",
                   background: isSelected
-                    ? "rgba(16, 185, 129, 0.15)"
+                    ? "rgba(16, 185, 129, 0.18)"
                     : day.isToday
-                    ? "rgba(16, 185, 129, 0.05)"
+                    ? "rgba(16, 185, 129, 0.06)"
                     : "rgba(15, 23, 42, 0.6)",
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
-                  gap: 4,
+                  gap: 3,
                   cursor: "pointer",
                   transition: "all var(--transition-fast)",
                 }}
+                title={`${day.dayName}, ${day.monthName} ${day.dayNum} (${day.planCount} plans)`}
               >
-                <span style={{ fontSize: "0.75rem", color: day.isToday ? "var(--emerald-primary)" : "var(--text-dim)", fontWeight: 700 }}>
+                <span style={{ fontSize: "0.725rem", color: day.isToday ? "var(--emerald-primary)" : "var(--text-dim)", fontWeight: 700 }}>
                   {day.dayName}
                 </span>
-                <span style={{ fontSize: "1.25rem", fontWeight: 800, color: isSelected ? "var(--emerald-primary)" : "var(--text-main)" }}>
+                <span style={{ fontSize: "1.2rem", fontWeight: 800, color: isSelected ? "var(--emerald-primary)" : "var(--text-main)" }}>
                   {day.dayNum}
                 </span>
-                <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>
+                <span style={{ fontSize: "0.675rem", color: "var(--text-muted)" }}>
                   {day.monthName}
                 </span>
 
                 {day.planCount > 0 && (
                   <span
                     style={{
-                      marginTop: 4,
+                      marginTop: 3,
                       width: 18,
                       height: 18,
                       borderRadius: "50%",
@@ -171,13 +257,16 @@ export default function SchedulePage({
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
         <div style={{ display: "flex", background: "rgba(15, 23, 42, 0.6)", padding: 4, borderRadius: 10, border: "1px solid var(--border-subtle)" }}>
           <button
-            onClick={() => setFilterMode("upcoming")}
+            onClick={() => {
+              setFilterMode("upcoming");
+              setFilterBySelectedDateOnly(false);
+            }}
             style={{
               padding: "6px 14px",
               borderRadius: 8,
               border: "none",
-              background: filterMode === "upcoming" ? "var(--emerald-primary)" : "transparent",
-              color: filterMode === "upcoming" ? "#042f2e" : "var(--text-muted)",
+              background: filterMode === "upcoming" && !filterBySelectedDateOnly ? "var(--emerald-primary)" : "transparent",
+              color: filterMode === "upcoming" && !filterBySelectedDateOnly ? "#042f2e" : "var(--text-muted)",
               fontWeight: 700,
               fontSize: "0.85rem",
               cursor: "pointer",
@@ -186,13 +275,16 @@ export default function SchedulePage({
             Upcoming Plans ({plans.filter((p) => !p.is_completed && p.scheduled_date >= todayStr).length})
           </button>
           <button
-            onClick={() => setFilterMode("all")}
+            onClick={() => {
+              setFilterMode("all");
+              setFilterBySelectedDateOnly(false);
+            }}
             style={{
               padding: "6px 14px",
               borderRadius: 8,
               border: "none",
-              background: filterMode === "all" ? "var(--emerald-primary)" : "transparent",
-              color: filterMode === "all" ? "#042f2e" : "var(--text-muted)",
+              background: filterMode === "all" && !filterBySelectedDateOnly ? "var(--emerald-primary)" : "transparent",
+              color: filterMode === "all" && !filterBySelectedDateOnly ? "#042f2e" : "var(--text-muted)",
               fontWeight: 700,
               fontSize: "0.85rem",
               cursor: "pointer",
@@ -201,13 +293,16 @@ export default function SchedulePage({
             All Plans ({plans.length})
           </button>
           <button
-            onClick={() => setFilterMode("completed")}
+            onClick={() => {
+              setFilterMode("completed");
+              setFilterBySelectedDateOnly(false);
+            }}
             style={{
               padding: "6px 14px",
               borderRadius: 8,
               border: "none",
-              background: filterMode === "completed" ? "var(--emerald-primary)" : "transparent",
-              color: filterMode === "completed" ? "#042f2e" : "var(--text-muted)",
+              background: filterMode === "completed" && !filterBySelectedDateOnly ? "var(--emerald-primary)" : "transparent",
+              color: filterMode === "completed" && !filterBySelectedDateOnly ? "#042f2e" : "var(--text-muted)",
               fontWeight: 700,
               fontSize: "0.85rem",
               cursor: "pointer",
@@ -218,7 +313,7 @@ export default function SchedulePage({
         </div>
 
         <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
-          Total Scheduled: <strong style={{ color: "var(--text-main)" }}>{filteredPlans.length}</strong>
+          Showing: <strong style={{ color: "var(--text-main)" }}>{filteredPlans.length}</strong> {filteredPlans.length === 1 ? "workout" : "workouts"}
         </span>
       </div>
 
@@ -228,16 +323,18 @@ export default function SchedulePage({
           <div style={{ width: 56, height: 56, borderRadius: 16, background: "rgba(255, 255, 255, 0.04)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", color: "var(--text-dim)" }}>
             <CalendarIcon size={28} />
           </div>
-          <h3 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: 6 }}>No scheduled workouts in this view</h3>
+          <h3 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: 6 }}>
+            {filterBySelectedDateOnly ? `No workouts scheduled for ${selectedDate}` : "No scheduled workouts in this view"}
+          </h3>
           <p style={{ color: "var(--text-muted)", fontSize: "0.9rem", maxWidth: 440, margin: "0 auto 20px" }}>
-            Planning ahead removes morning friction. Schedule your next Surya Namaskar, Baithak squats, or tempo run!
+            Planning ahead removes morning friction. Schedule your next workout session today!
           </p>
           <button onClick={onOpenAddPlan} className="btn-primary" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
             <Plus size={16} /> Schedule a Workout Now
           </button>
         </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 16 }}>
           {filteredPlans.map((plan) => {
             const isToday = plan.scheduled_date === todayStr;
             const isPast = plan.scheduled_date < todayStr;
@@ -266,6 +363,7 @@ export default function SchedulePage({
                     ? "4px solid #64748b"
                     : "4px solid #3b82f6",
                   position: "relative",
+                  transition: "all var(--transition-fast)",
                 }}
               >
                 <div>
@@ -347,6 +445,7 @@ export default function SchedulePage({
                       gap: 8,
                       background: isToday ? "var(--grad-fire)" : "var(--grad-emerald)",
                       border: "none",
+                      cursor: "pointer",
                     }}
                   >
                     <CheckCircle2 size={16} />

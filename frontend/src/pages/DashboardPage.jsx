@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { 
   Flame, 
   Dumbbell, 
@@ -12,9 +12,38 @@ import {
   Sparkles,
   CheckCircle2,
   CalendarDays,
-  Zap
+  Zap,
+  RotateCw
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+
+const MOTIVATIONAL_SHLOKAS = [
+  {
+    sanskrit: "शरीरमाद्यं खलु धर्मसाधनम्",
+    english: "The physical body is the foremost instrument for fulfilling every purpose in life.",
+    author: "Kalidasa (Kumarasambhava)"
+  },
+  {
+    sanskrit: "योगः कर्मसु कौशलम्",
+    english: "Yoga is supreme skill, focus, and excellence in all action.",
+    author: "Bhagavad Gita 2.50"
+  },
+  {
+    sanskrit: "उद्यमेन हि सिध्यन्ति कार्याणि न मनोरथैः",
+    english: "True accomplishments are achieved through rigorous effort, not mere daydreams.",
+    author: "Hitopadesha"
+  },
+  {
+    sanskrit: "बलवान् अपि नित्यं हि व्यायामी जयते परान्",
+    english: "One who exercises daily overcomes all weaknesses and attains enduring strength.",
+    author: "Charaka Samhita"
+  },
+  {
+    sanskrit: "मन एव मनुष्याणां कारणं बन्धमोक्षयोः",
+    english: "The disciplined mind alone is the master of resilience and transformation.",
+    author: "Amritabindu Upanishad"
+  }
+];
 
 export default function DashboardPage({
   summary,
@@ -32,8 +61,11 @@ export default function DashboardPage({
   onEditWorkout,
   onCompletePlan,
   onOpenBadgePopup,
+  onUpdateGoalProgress,
 }) {
   const { user } = useAuth();
+  const [quoteIndex, setQuoteIndex] = useState(0);
+
   const todayDateStr = new Date().toLocaleDateString("en-IN", {
     weekday: "long",
     day: "numeric",
@@ -45,26 +77,45 @@ export default function DashboardPage({
   const todayCalories = summary?.today_calories || 0;
   const todayPercent = Math.min(100, Math.round((todayCalories / dailyCalorieTarget) * 100));
 
-  // Friendly human Indian name formatting
+  // Friendly human name formatting
   const displayName = user?.username
     ? user.username.split("_")[0].charAt(0).toUpperCase() + user.username.split("_")[0].slice(1)
     : "Athlete";
 
   // Use personalized greeting from backend or fallback
   const greeting = personalizedData?.greeting || `Namaste, ${displayName}! 🙏`;
-  const shloka = personalizedData?.desi_shloka || {
-    sanskrit: "शरीरमाद्यं खलु धर्मसाधनम्",
-    english: "The physical body is the foremost instrument for fulfilling every purpose in life."
+  const currentShloka = MOTIVATIONAL_SHLOKAS[quoteIndex % MOTIVATIONAL_SHLOKAS.length];
+
+  const handleNextQuote = () => {
+    setQuoteIndex((prev) => (prev + 1) % MOTIVATIONAL_SHLOKAS.length);
   };
 
   const streakStats = streak || personalizedData?.streak || {
     current_streak: summary?.current_streak || 0,
     longest_streak: summary?.current_streak || 0,
-    status: summary?.current_streak > 0 ? "active" : "resting",
+    status: (summary?.current_streak || 0) > 0 ? "active" : "resting",
     streak_message: "Maintain consistency to build an unbroken training habit!",
     next_milestone: 7,
     days_to_milestone: Math.max(0, 7 - (summary?.current_streak || 0)),
   };
+
+  // Generate last 7 days visual habit tracker
+  const last7Days = Array.from({ length: 7 }).map((_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    const dayName = d.toLocaleDateString("en-US", { weekday: "narrow" });
+    const isToday = i === 6;
+    const hasWorkout = isToday 
+      ? todayWorkouts.length > 0
+      : (6 - i) < (streakStats.current_streak || 0);
+
+    return {
+      dayName,
+      hasWorkout,
+      isToday,
+      dateNum: d.getDate(),
+    };
+  });
 
   const getBadgeIcon = (iconName) => {
     switch (iconName) {
@@ -82,6 +133,13 @@ export default function DashboardPage({
     }
   };
 
+  // Category counts for today's workout activities
+  const categoryCounts = todayWorkouts.reduce((acc, w) => {
+    const cat = w.category || "General";
+    acc[cat] = (acc[cat] || 0) + 1;
+    return acc;
+  }, {});
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
       {/* Module 12: Personalized Welcome Banner */}
@@ -98,16 +156,39 @@ export default function DashboardPage({
           border: "1px solid rgba(249, 115, 22, 0.25)",
         }}
       >
-        <div>
+        <div style={{ flex: "1 1 500px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#fb923c", fontSize: "0.825rem", fontWeight: 700, marginBottom: 4 }}>
-            <Calendar size={14} /> {todayDateStr} • <span style={{ color: "var(--emerald-primary)" }}>Fit India Movement 🇮🇳</span>
+            <Calendar size={14} /> {todayDateStr} • <span style={{ color: "var(--emerald-primary)" }}>Daily Fitness Tracker 🇮🇳</span>
           </div>
           <h1 style={{ fontSize: "2.1rem", margin: "4px 0 6px 0", fontFamily: "var(--font-display)" }}>
             {greeting}
           </h1>
-          <p style={{ color: "var(--text-muted)", fontSize: "0.925rem", margin: 0, maxWidth: 720, lineHeight: 1.6 }}>
-            <strong style={{ color: "#fbbf24", fontStyle: "italic" }}>"{shloka.sanskrit}"</strong> — {shloka.english}
-          </p>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginTop: 8 }}>
+            <p style={{ color: "var(--text-muted)", fontSize: "0.925rem", margin: 0, lineHeight: 1.6 }}>
+              <strong style={{ color: "#fbbf24", fontStyle: "italic" }}>"{currentShloka.sanskrit}"</strong> — {currentShloka.english}
+              <span style={{ display: "block", fontSize: "0.75rem", color: "var(--text-dim)", marginTop: 2 }}>
+                — {currentShloka.author}
+              </span>
+            </p>
+            <button
+              onClick={handleNextQuote}
+              title="Next motivational wisdom"
+              className="btn-secondary"
+              style={{
+                padding: "6px 10px",
+                borderRadius: 8,
+                fontSize: "0.75rem",
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+                marginTop: 2,
+              }}
+            >
+              <RotateCw size={12} /> Next Quote
+            </button>
+          </div>
         </div>
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
@@ -120,25 +201,25 @@ export default function DashboardPage({
         </div>
       </div>
 
-      {/* Module 10: Streak Tracking Banner */}
+      {/* Module 10: Interactive Streak Tracking Banner */}
       <div
         className="glass-card"
         style={{
-          padding: "20px 26px",
+          padding: "22px 26px",
           background: "linear-gradient(135deg, rgba(249, 115, 22, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%)",
           border: "1px solid rgba(249, 115, 22, 0.35)",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
           flexWrap: "wrap",
-          gap: 16,
+          gap: 20,
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <div
             style={{
-              width: 54,
-              height: 54,
+              width: 56,
+              height: 56,
               borderRadius: 16,
               background: "rgba(249, 115, 22, 0.2)",
               display: "flex",
@@ -146,7 +227,7 @@ export default function DashboardPage({
               justifyContent: "center",
             }}
           >
-            <Flame size={32} className={streakStats.current_streak > 0 ? "flame-active" : ""} />
+            <Flame size={34} className={streakStats.current_streak > 0 ? "flame-active" : ""} />
           </div>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -172,14 +253,58 @@ export default function DashboardPage({
           </div>
         </div>
 
-        {streakStats.days_to_milestone > 0 && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255, 255, 255, 0.05)", padding: "8px 14px", borderRadius: 10 }}>
-            <Award size={18} color="#fbbf24" />
-            <span style={{ fontSize: "0.825rem", color: "var(--text-main)" }}>
-              <strong>{streakStats.days_to_milestone} days</strong> to {streakStats.next_milestone}-Day Milestone Badge!
-            </span>
+        {/* 7-Day Mini Habit Track Strip */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ display: "flex", gap: 6, background: "rgba(0, 0, 0, 0.25)", padding: "8px 12px", borderRadius: 12, border: "1px solid var(--border-subtle)" }}>
+            {last7Days.map((d, i) => (
+              <div
+                key={i}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 3,
+                  minWidth: 26,
+                }}
+                title={`${d.dayName} (${d.dateNum}): ${d.hasWorkout ? "Completed Workout" : "No Workout"}`}
+              >
+                <span style={{ fontSize: "0.65rem", fontWeight: 700, color: d.isToday ? "var(--emerald-primary)" : "var(--text-dim)" }}>
+                  {d.dayName}
+                </span>
+                <div
+                  style={{
+                    width: 22,
+                    height: 22,
+                    borderRadius: 6,
+                    background: d.hasWorkout 
+                      ? "linear-gradient(135deg, #f97316 0%, #ef4444 100%)" 
+                      : "rgba(255, 255, 255, 0.05)",
+                    border: d.isToday 
+                      ? "1px solid var(--emerald-primary)" 
+                      : "1px solid transparent",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "0.7rem",
+                    color: "#fff",
+                    boxShadow: d.hasWorkout ? "0 0 8px rgba(249, 115, 22, 0.4)" : "none",
+                  }}
+                >
+                  {d.hasWorkout ? "✓" : "·"}
+                </div>
+              </div>
+            ))}
           </div>
-        )}
+
+          {streakStats.days_to_milestone > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255, 255, 255, 0.05)", padding: "8px 14px", borderRadius: 10 }}>
+              <Award size={18} color="#fbbf24" />
+              <span style={{ fontSize: "0.825rem", color: "var(--text-main)" }}>
+                <strong>{streakStats.days_to_milestone} days</strong> to {streakStats.next_milestone}-Day Badge!
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -211,7 +336,7 @@ export default function DashboardPage({
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6, fontSize: "0.75rem", color: "var(--text-dim)" }}>
             <span>{todayPercent}% Daily Target</span>
-            <span>{todayCalories >= dailyCalorieTarget ? "Target Hit! Shabaash! 🔥" : `${dailyCalorieTarget - Math.round(todayCalories)} kcal to go`}</span>
+            <span>{todayCalories >= dailyCalorieTarget ? "Target Hit! 🔥" : `${dailyCalorieTarget - Math.round(todayCalories)} kcal to go`}</span>
           </div>
         </div>
 
@@ -237,7 +362,7 @@ export default function DashboardPage({
           </div>
         </div>
 
-        {/* Longest & Habit Index */}
+        {/* Discipline & Badges */}
         <div className="glass-card" style={{ padding: "22px 24px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
             <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-muted)" }}>Discipline & Badges</span>
@@ -256,7 +381,7 @@ export default function DashboardPage({
           </button>
         </div>
 
-        {/* Weekly Calories Burn with Trend */}
+        {/* Weekly Output */}
         <div className="glass-card" style={{ padding: "22px 24px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
             <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-muted)" }}>Weekly Output</span>
@@ -322,6 +447,7 @@ export default function DashboardPage({
                     flexDirection: "column",
                     justifyContent: "space-between",
                     gap: 12,
+                    transition: "all var(--transition-fast)",
                   }}
                 >
                   <div>
@@ -345,12 +471,13 @@ export default function DashboardPage({
                     className="btn-secondary"
                     style={{
                       width: "100%",
-                      padding: "6px 12px",
+                      padding: "8px 12px",
                       fontSize: "0.8rem",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                       gap: 6,
+                      cursor: "pointer",
                     }}
                   >
                     <CheckCircle2 size={14} color="var(--emerald-primary)" />
@@ -367,7 +494,7 @@ export default function DashboardPage({
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 24 }}>
         {/* Today's Workout Activities */}
         <div className="glass-card" style={{ padding: "26px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
             <div>
               <h3 style={{ fontSize: "1.2rem", margin: 0 }}>Today's Activities</h3>
               <span style={{ fontSize: "0.8rem", color: "var(--text-dim)" }}>Your logged exercises for today</span>
@@ -377,12 +504,27 @@ export default function DashboardPage({
             </button>
           </div>
 
+          {/* Category breakdown pills if workouts exist */}
+          {Object.keys(categoryCounts).length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 14 }}>
+              {Object.entries(categoryCounts).map(([cat, count]) => (
+                <span
+                  key={cat}
+                  className={`badge badge-${cat.toLowerCase()}`}
+                  style={{ fontSize: "0.725rem", padding: "3px 8px" }}
+                >
+                  {cat}: {count}
+                </span>
+              ))}
+            </div>
+          )}
+
           {todayWorkouts.length === 0 ? (
             <div style={{ padding: "32px 20px", textAlign: "center", border: "1px dashed var(--border-subtle)", borderRadius: 12 }}>
               <Dumbbell size={36} style={{ color: "var(--text-dim)", margin: "0 auto 10px auto", opacity: 0.5 }} />
               <p style={{ fontSize: "0.95rem", fontWeight: 600, margin: "0 0 6px 0" }}>No workouts logged today yet</p>
               <p style={{ fontSize: "0.825rem", color: "var(--text-muted)", margin: "0 0 16px 0" }}>
-                Add your morning Surya Namaskar, Akhada lift, or evening walk to boost today's stats!
+                Log your morning session, gym workout, or evening walk to keep your streak ablaze!
               </p>
               <button onClick={onOpenAddWorkout} className="btn-primary" style={{ padding: "8px 16px" }}>
                 <Plus size={14} /> Log Workout Now
@@ -401,6 +543,7 @@ export default function DashboardPage({
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
+                    transition: "all var(--transition-fast)",
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -426,12 +569,12 @@ export default function DashboardPage({
           )}
         </div>
 
-        {/* Active Fitness Goals Snapshot */}
+        {/* Active Fitness Goals Snapshot with Instant Boosters */}
         <div className="glass-card" style={{ padding: "26px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
             <div>
               <h3 style={{ fontSize: "1.2rem", margin: 0 }}>Active Fitness Goals</h3>
-              <span style={{ fontSize: "0.8rem", color: "var(--text-dim)" }}>Your current targets</span>
+              <span style={{ fontSize: "0.8rem", color: "var(--text-dim)" }}>Track progress and boost milestones</span>
             </div>
             <button onClick={() => onNavigateTab("goals")} className="btn-ghost" style={{ cursor: "pointer", border: "none" }}>
               Manage Goals <ChevronRight size={14} />
@@ -443,7 +586,7 @@ export default function DashboardPage({
               <Target size={36} style={{ color: "var(--text-dim)", margin: "0 auto 10px auto", opacity: 0.5 }} />
               <p style={{ fontSize: "0.95rem", fontWeight: 600, margin: "0 0 6px 0" }}>No active goals right now</p>
               <p style={{ fontSize: "0.825rem", color: "var(--text-muted)", margin: "0 0 16px 0" }}>
-                Set a wedding season goal, calorie burn milestone, or 10k daily steps!
+                Set a target to keep yourself motivated and accountable!
               </p>
               <button onClick={() => onNavigateTab("goals")} className="btn-primary" style={{ padding: "8px 16px" }}>
                 Set a Goal
@@ -470,20 +613,51 @@ export default function DashboardPage({
                       </span>
                     </div>
 
-                    <div style={{ width: "100%", height: 6, background: "rgba(255, 255, 255, 0.08)", borderRadius: 3, overflow: "hidden", marginBottom: 6 }}>
+                    <div style={{ width: "100%", height: 6, background: "rgba(255, 255, 255, 0.08)", borderRadius: 3, overflow: "hidden", marginBottom: 8 }}>
                       <div
                         style={{
                           width: `${pct}%`,
                           height: "100%",
                           background: pct >= 100 ? "#10b981" : "linear-gradient(90deg, #10b981, #06b6d4)",
                           borderRadius: 3,
+                          transition: "width 400ms ease",
                         }}
                       />
                     </div>
 
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "var(--text-dim)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.75rem", color: "var(--text-dim)" }}>
                       <span>{pct}% Completed</span>
-                      <span>Target: {new Date(g.deadline).toLocaleDateString("en-IN", { month: "short", day: "numeric" })}</span>
+
+                      {/* Interactive Quick Add Buttons */}
+                      {onUpdateGoalProgress && (
+                        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                          <span style={{ fontSize: "0.7rem", color: "var(--text-dim)" }}>Quick add:</span>
+                          <button
+                            onClick={() => onUpdateGoalProgress(g.id, g.current_value + 1)}
+                            className="btn-secondary"
+                            style={{ padding: "2px 6px", fontSize: "0.7rem", borderRadius: 4 }}
+                            title="Add 1 unit to progress"
+                          >
+                            +1
+                          </button>
+                          <button
+                            onClick={() => onUpdateGoalProgress(g.id, g.current_value + 5)}
+                            className="btn-secondary"
+                            style={{ padding: "2px 6px", fontSize: "0.7rem", borderRadius: 4 }}
+                            title="Add 5 units to progress"
+                          >
+                            +5
+                          </button>
+                          <button
+                            onClick={() => onUpdateGoalProgress(g.id, g.current_value + 10)}
+                            className="btn-secondary"
+                            style={{ padding: "2px 6px", fontSize: "0.7rem", borderRadius: 4 }}
+                            title="Add 10 units to progress"
+                          >
+                            +10
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );

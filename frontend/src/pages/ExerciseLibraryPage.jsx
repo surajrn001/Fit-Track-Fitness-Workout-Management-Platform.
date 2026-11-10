@@ -9,7 +9,8 @@ import {
   Zap, 
   Activity, 
   Sparkles,
-  Layers
+  Layers,
+  X
 } from "lucide-react";
 
 export default function ExerciseLibraryPage({ 
@@ -18,16 +19,27 @@ export default function ExerciseLibraryPage({
   onSelectExerciseToSchedule 
 }) {
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedDifficulty, setSelectedDifficulty] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
 
   const categories = ["All", "Cardio", "Strength", "Yoga"];
+  const difficulties = ["All", "Beginner", "Intermediate", "Advanced"];
+
+  // Compute category counts
+  const categoryCounts = {
+    All: exercises.length,
+    Cardio: exercises.filter((e) => e.category.toLowerCase() === "cardio").length,
+    Strength: exercises.filter((e) => e.category.toLowerCase() === "strength").length,
+    Yoga: exercises.filter((e) => e.category.toLowerCase() === "yoga").length,
+  };
 
   const filteredExercises = exercises.filter((ex) => {
     const matchCat = selectedCategory === "All" || ex.category.toLowerCase() === selectedCategory.toLowerCase();
+    const matchDiff = selectedDifficulty === "All" || (ex.difficulty && ex.difficulty.toLowerCase() === selectedDifficulty.toLowerCase());
     const matchSearch = !searchQuery || 
       ex.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
       (ex.description && ex.description.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchCat && matchSearch;
+    return matchCat && matchDiff && matchSearch;
   });
 
   const getDifficultyColor = (diff) => {
@@ -60,46 +72,108 @@ export default function ExerciseLibraryPage({
           Exercise <span className="text-gradient">Library</span>
         </h1>
         <p style={{ color: "var(--text-muted)", fontSize: "0.95rem", marginTop: 4 }}>
-          Discover predefined Indian workouts, Akhada strength drills, and yogic flows. Log directly or schedule into your training calendar.
+          Discover predefined workouts, strength drills, and yogic flows. Log directly into your activity history or schedule into your training calendar.
         </p>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="glass-card" style={{ padding: "20px 24px", display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
-        {/* Category Pills */}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={selectedCategory === cat ? "btn-primary" : "btn-secondary"}
-              style={{
-                padding: "8px 16px",
-                fontSize: "0.85rem",
-                borderRadius: 10,
-                cursor: "pointer",
-              }}
-            >
-              {cat === "All" && "🌐 "}
-              {cat === "Cardio" && "🏃 "}
-              {cat === "Strength" && "🏋️ "}
-              {cat === "Yoga" && "🧘 "}
-              {cat}
-            </button>
-          ))}
+      <div className="glass-card" style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 16 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
+          {/* Category Pills with Dynamic Counts */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={selectedCategory === cat ? "btn-primary" : "btn-secondary"}
+                style={{
+                  padding: "8px 16px",
+                  fontSize: "0.85rem",
+                  borderRadius: 10,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                <span>
+                  {cat === "All" && "🌐 "}
+                  {cat === "Cardio" && "🏃 "}
+                  {cat === "Strength" && "🏋️ "}
+                  {cat === "Yoga" && "🧘 "}
+                  {cat}
+                </span>
+                <span
+                  style={{
+                    fontSize: "0.725rem",
+                    padding: "1px 6px",
+                    borderRadius: 6,
+                    background: selectedCategory === cat ? "rgba(0, 0, 0, 0.25)" : "rgba(255, 255, 255, 0.1)",
+                    color: selectedCategory === cat ? "#042f2e" : "var(--text-muted)",
+                    fontWeight: 800,
+                  }}
+                >
+                  {categoryCounts[cat] ?? 0}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* Search input with Clear Button */}
+          <div style={{ position: "relative", minWidth: 260, flex: "1 1 260px", maxWidth: 420 }}>
+            <input
+              type="text"
+              className="form-input"
+              placeholder="Search exercises (e.g. Baithak, Surya, Run)..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ paddingLeft: 40, paddingRight: searchQuery ? 36 : 14 }}
+            />
+            <Search size={18} style={{ position: "absolute", left: 14, top: 12, color: "var(--text-dim)" }} />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                style={{
+                  position: "absolute",
+                  right: 12,
+                  top: 10,
+                  background: "transparent",
+                  border: "none",
+                  color: "var(--text-dim)",
+                  cursor: "pointer",
+                  padding: 2,
+                }}
+                title="Clear search"
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Search input */}
-        <div style={{ position: "relative", minWidth: 260, flex: "1 1 260px", maxWidth: 400 }}>
-          <input
-            type="text"
-            className="input-field"
-            placeholder="Search exercises (e.g. Baithak, Surya, Run)..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ paddingLeft: 40 }}
-          />
-          <Search size={18} style={{ position: "absolute", left: 14, top: 12, color: "var(--text-dim)" }} />
+        {/* Sub-filter row: Difficulty levels */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, borderTop: "1px solid var(--border-subtle)", paddingTop: 12, flexWrap: "wrap" }}>
+          <span style={{ fontSize: "0.8rem", color: "var(--text-dim)", fontWeight: 600 }}>Difficulty:</span>
+          {difficulties.map((diff) => (
+            <button
+              key={diff}
+              onClick={() => setSelectedDifficulty(diff)}
+              className="btn-secondary"
+              style={{
+                padding: "4px 10px",
+                fontSize: "0.75rem",
+                borderRadius: 6,
+                background: selectedDifficulty === diff ? "rgba(16, 185, 129, 0.2)" : undefined,
+                color: selectedDifficulty === diff ? "var(--emerald-primary)" : "var(--text-muted)",
+                borderColor: selectedDifficulty === diff ? "var(--emerald-primary)" : undefined,
+              }}
+            >
+              {diff}
+            </button>
+          ))}
+          <span style={{ marginLeft: "auto", fontSize: "0.8rem", color: "var(--text-dim)" }}>
+            Found {filteredExercises.length} {filteredExercises.length === 1 ? "exercise" : "exercises"}
+          </span>
         </div>
       </div>
 
@@ -111,11 +185,11 @@ export default function ExerciseLibraryPage({
           </div>
           <h3 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: 6 }}>No exercises found matching your criteria</h3>
           <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
-            Try adjusting your search terms or clearing the category filter.
+            Try adjusting your search terms or clearing the filters.
           </p>
         </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))", gap: 20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 20 }}>
           {filteredExercises.map((exercise) => {
             const diffStyle = getDifficultyColor(exercise.difficulty);
             return (
@@ -198,6 +272,7 @@ export default function ExerciseLibraryPage({
                       alignItems: "center",
                       justifyContent: "center",
                       gap: 6,
+                      cursor: "pointer",
                     }}
                   >
                     <Plus size={15} />
@@ -214,6 +289,7 @@ export default function ExerciseLibraryPage({
                       alignItems: "center",
                       justifyContent: "center",
                       gap: 6,
+                      cursor: "pointer",
                     }}
                   >
                     <Calendar size={15} />

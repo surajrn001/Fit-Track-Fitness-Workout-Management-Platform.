@@ -91,7 +91,7 @@ export default function AuthPage() {
           </div>
 
           <h1 style={{ fontSize: "2.8rem", lineHeight: 1.18, fontWeight: 800, marginBottom: 14 }}>
-            Empower Your Fitness with <span className="text-gradient">FitTrack Bharat</span>
+            Empower Your Fitness with <span className="text-gradient">FitTrack</span>
           </h1>
 
           <p style={{ fontSize: "1.05rem", color: "var(--text-muted)", lineHeight: 1.6, marginBottom: 26 }}>

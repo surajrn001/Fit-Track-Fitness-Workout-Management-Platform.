@@ -112,15 +112,16 @@ export default function Navbar({
                 style={{
                   fontSize: "0.65rem",
                   textTransform: "uppercase",
-                  fontWeight: 700,
+                  fontWeight: 800,
                   letterSpacing: "0.1em",
-                  color: "#fb923c",
+                  color: "var(--emerald-primary)",
                   padding: "1px 6px",
                   borderRadius: 4,
-                  background: "rgba(249, 115, 22, 0.15)",
+                  background: "rgba(16, 185, 129, 0.15)",
+                  border: "1px solid rgba(16, 185, 129, 0.3)",
                 }}
               >
-                BHARAT 🇮🇳
+                PRO
               </span>
             </div>
           </div>

@@ -53,6 +53,19 @@ export default function GoalsPage({
     setNewProgressValue(goal.current_value);
   };
 
+  const handleQuickAdd = async (goal, amount) => {
+    const newVal = Math.max(0, goal.current_value + amount);
+    await onUpdateGoalProgress(goal.id, newVal);
+    if (newVal >= goal.target_value && !goal.is_completed) {
+      confetti({
+        particleCount: 120,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ["#10b981", "#3b82f6", "#f97316", "#eab308"],
+      });
+    }
+  };
+
   const handleSaveProgress = async (e) => {
     e.preventDefault();
     if (!logProgressGoal) return;
@@ -61,7 +74,6 @@ export default function GoalsPage({
       const val = parseFloat(newProgressValue);
       await onUpdateGoalProgress(logProgressGoal.id, val);
 
-      // Trigger celebration confetti if goal reached 100%!
       if (val >= logProgressGoal.target_value) {
         confetti({
           particleCount: 140,
@@ -84,9 +96,9 @@ export default function GoalsPage({
       {/* Top Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
         <div>
-          <h1 style={{ fontSize: "2rem", margin: "0 0 4px 0" }}>Fitness Goals & Sankalp</h1>
+          <h1 style={{ fontSize: "2rem", margin: "0 0 4px 0" }}>Fitness Goals & Milestones</h1>
           <p style={{ color: "var(--text-muted)", fontSize: "0.9rem", margin: 0 }}>
-            Establish quantifiable milestones, update your logs regularly, and celebrate every victory.
+            Establish quantifiable milestones, update your logs with 1-click boosters, and celebrate every victory.
           </p>
         </div>
 
@@ -144,8 +156,8 @@ export default function GoalsPage({
           </h3>
           <p style={{ color: "var(--text-muted)", fontSize: "0.9rem", maxWidth: 420, margin: "0 auto 20px auto" }}>
             {activeTab === "active"
-              ? "Set a wedding season goal, 15,000 calorie burn, or 10,000 steps target to keep motivated!"
-              : "Update your current values as you work out — achieving 100% moves them here with confetti!"}
+              ? "Set a target like 15,000 calorie burn, 10,000 steps, or 50 Surya Namaskars to stay motivated!"
+              : "Update your current values as you train — achieving 100% moves your goals here with confetti!"}
           </p>
           {activeTab === "active" && (
             <button onClick={onOpenAddGoal} className="btn btn-primary">
@@ -174,6 +186,7 @@ export default function GoalsPage({
                   justifyContent: "space-between",
                   gap: 18,
                   borderColor: isFinished ? "rgba(16, 185, 129, 0.45)" : "var(--border-subtle)",
+                  transition: "all var(--transition-fast)",
                 }}
               >
                 <div>
@@ -213,7 +226,7 @@ export default function GoalsPage({
                           border: "1px solid rgba(16, 185, 129, 0.3)",
                         }}
                       >
-                        🏆 Shabaash! Achieved
+                        🏆 Achieved
                       </span>
                     ) : daysLeft < 0 ? (
                       <span
@@ -261,7 +274,7 @@ export default function GoalsPage({
                   </div>
 
                   {/* Progress Bar */}
-                  <div style={{ width: "100%", height: 8, background: "rgba(255, 255, 255, 0.08)", borderRadius: 4, overflow: "hidden" }}>
+                  <div style={{ width: "100%", height: 8, background: "rgba(255, 255, 255, 0.08)", borderRadius: 4, overflow: "hidden", marginBottom: 12 }}>
                     <div
                       style={{
                         width: `${Math.min(100, pct)}%`,
@@ -270,10 +283,41 @@ export default function GoalsPage({
                           ? "linear-gradient(90deg, #10b981, #06b6d4)"
                           : "linear-gradient(90deg, #f97316, #10b981)",
                         borderRadius: 4,
-                        transition: "width 500ms ease",
+                        transition: "width 400ms ease",
                       }}
                     />
                   </div>
+
+                  {/* Quick Booster Action Bar */}
+                  {!isFinished && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(0, 0, 0, 0.25)", padding: "6px 10px", borderRadius: 8, border: "1px solid var(--border-subtle)" }}>
+                      <span style={{ fontSize: "0.725rem", color: "var(--text-dim)", fontWeight: 600 }}>Quick Log:</span>
+                      <button
+                        onClick={() => handleQuickAdd(g, 1)}
+                        className="btn-secondary"
+                        style={{ padding: "2px 8px", fontSize: "0.75rem", borderRadius: 4 }}
+                        title="Add 1 unit"
+                      >
+                        +1
+                      </button>
+                      <button
+                        onClick={() => handleQuickAdd(g, 5)}
+                        className="btn-secondary"
+                        style={{ padding: "2px 8px", fontSize: "0.75rem", borderRadius: 4 }}
+                        title="Add 5 units"
+                      >
+                        +5
+                      </button>
+                      <button
+                        onClick={() => handleQuickAdd(g, 10)}
+                        className="btn-secondary"
+                        style={{ padding: "2px 8px", fontSize: "0.75rem", borderRadius: 4 }}
+                        title="Add 10 units"
+                      >
+                        +10
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Footer Controls */}
@@ -281,7 +325,7 @@ export default function GoalsPage({
                   <button
                     onClick={() => handleOpenProgressModal(g)}
                     className="btn btn-primary btn-sm"
-                    style={{ fontSize: "0.8rem", padding: "6px 14px" }}
+                    style={{ fontSize: "0.8rem", padding: "6px 14px", cursor: "pointer" }}
                   >
                     <TrendingUp size={14} /> Update Value
                   </button>

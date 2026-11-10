@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { api } from "./services/api";
 import Navbar from "./components/Navbar";
@@ -48,6 +48,9 @@ function MainApp() {
   const [loadingData, setLoadingData] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState(null);
 
+  // Cached tracking to prevent redundant fetches
+  const exercisesLoadedRef = useRef(false);
+
   // Modal States
   const [isWorkoutModalOpen, setIsWorkoutModalOpen] = useState(false);
   const [editingWorkout, setEditingWorkout] = useState(null);
@@ -67,188 +70,274 @@ function MainApp() {
   // Helper feedback toast
   const showFeedback = (text, type = "success") => {
     setFeedbackMessage({ text, type });
-    setTimeout(() => setFeedbackMessage(null), 4500);
+    setTimeout(() => setFeedbackMessage(null), 3500);
   };
 
-  // Fetch all Phase 1 & Phase 2 datasets
-  const fetchAllData = useCallback(async () => {
+  // Efficient core data fetcher - targeted and fast
+  const fetchCoreData = useCallback(async (silent = false) => {
     if (!isAuthenticated) return;
     try {
-      setLoadingData(true);
+      if (!silent) setLoadingData(true);
       const [
-        workoutsData,
-        summaryData,
-        recordsData,
-        goalsData,
-        weeklyData,
-        monthlyData,
-        notifsData,
-        plansData,
-        exercisesData,
-        streakData,
-        badgesData,
         personalizedRes,
-        weeklyCompRes,
-        monthlyCompRes,
+        workoutsData,
+        goalsData,
+        plansData,
+        badgesData,
+        notifsData,
+        streakData,
+        summaryData,
       ] = await Promise.all([
-        api.getWorkouts().catch(() => []),
-        api.getSummary().catch(() => null),
-        api.getDailyProgress(30).catch(() => []),
-        api.getGoals().catch(() => []),
-        api.getWeeklyAnalytics().catch(() => null),
-        api.getMonthlyAnalytics().catch(() => null),
-        api.getNotifications().catch(() => []),
-        api.getWorkoutPlans().catch(() => []),
-        api.getExercises().catch(() => []),
-        api.getStreak().catch(() => null),
-        api.getBadges().catch(() => []),
         api.getPersonalizedDashboard().catch(() => null),
-        api.getWeeklyComparison().catch(() => null),
-        api.getMonthlyComparison().catch(() => null),
+        api.getWorkouts().catch(() => []),
+        api.getGoals().catch(() => []),
+        api.getWorkoutPlans().catch(() => []),
+        api.getBadges().catch(() => []),
+        api.getNotifications().catch(() => []),
+        api.getStreak().catch(() => null),
+        api.getSummary().catch(() => null),
       ]);
 
-      setWorkouts(workoutsData || []);
-      setSummary(summaryData || null);
-      setDailyRecords(recordsData || []);
-      setGoals(goalsData || []);
-      setWeeklyAnalytics(weeklyData || null);
-      setMonthlyAnalytics(monthlyData || null);
-      setNotifications(notifsData || []);
-      setPlans(plansData || []);
-      setExercises(exercisesData || []);
-      setStreak(streakData || null);
-      setBadges(badgesData || []);
-      setPersonalizedData(personalizedRes || null);
-      setWeeklyComp(weeklyCompRes || null);
-      setMonthlyComp(monthlyCompRes || null);
+      if (personalizedRes) setPersonalizedData(personalizedRes);
+      if (workoutsData) setWorkouts(workoutsData);
+      if (goalsData) setGoals(goalsData);
+      if (plansData) setPlans(plansData);
+      if (badgesData) setBadges(badgesData);
+      if (notifsData) setNotifications(notifsData);
+      if (streakData) setStreak(streakData);
+      if (summaryData) setSummary(summaryData);
     } catch (err) {
-      console.error("Error loading FitTrack data:", err);
+      console.error("Error loading core FitTrack data:", err);
     } finally {
-      setLoadingData(false);
+      if (!silent) setLoadingData(false);
     }
   }, [isAuthenticated]);
 
-  useEffect(() => {
-    fetchAllData();
-  }, [fetchAllData]);
+  // Load static exercises catalog once
+  const loadExercisesOnce = useCallback(async () => {
+    if (exercisesLoadedRef.current || !isAuthenticated) return;
+    try {
+      const data = await api.getExercises();
+      setExercises(data || []);
+      exercisesLoadedRef.current = true;
+    } catch (e) {
+      console.error("Error loading exercises:", e);
+    }
+  }, [isAuthenticated]);
 
-  // Periodic notification & reminders refresh
+  // Lazy tab loader to avoid unnecessary network queries
+  const handleTabChange = useCallback(async (tab) => {
+    setActiveTab(tab);
+
+    if (tab === "exercises" && !exercisesLoadedRef.current) {
+      loadExercisesOnce();
+    } else if (tab === "progress" && dailyRecords.length === 0) {
+      try {
+        const records = await api.getDailyProgress(30);
+        setDailyRecords(records || []);
+      } catch (e) {}
+    } else if (tab === "comparison" && (!weeklyComp || !monthlyComp)) {
+      try {
+        const [w, m] = await Promise.all([
+          api.getWeeklyComparison().catch(() => null),
+          api.getMonthlyComparison().catch(() => null),
+        ]);
+        if (w) setWeeklyComp(w);
+        if (m) setMonthlyComp(m);
+      } catch (e) {}
+    } else if (tab === "analytics" && (!weeklyAnalytics || !monthlyAnalytics)) {
+      try {
+        const [w, m] = await Promise.all([
+          api.getWeeklyAnalytics().catch(() => null),
+          api.getMonthlyAnalytics().catch(() => null),
+        ]);
+        if (w) setWeeklyAnalytics(w);
+        if (m) setMonthlyAnalytics(m);
+      } catch (e) {}
+    }
+  }, [dailyRecords.length, weeklyComp, monthlyComp, weeklyAnalytics, monthlyAnalytics, loadExercisesOnce]);
+
+  // Initial load
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchCoreData();
+      loadExercisesOnce();
+    }
+  }, [isAuthenticated, fetchCoreData, loadExercisesOnce]);
+
+  // Periodic notification polling
   useEffect(() => {
     if (!isAuthenticated) return;
     const interval = setInterval(async () => {
       try {
         const notifs = await api.getNotifications();
         setNotifications(notifs || []);
-      } catch (e) {
-        // quiet catch
-      }
-    }, 30000);
+      } catch (e) {}
+    }, 45000);
     return () => clearInterval(interval);
   }, [isAuthenticated]);
 
+  // ---------------- ACTION HANDLERS WITH OPTIMISTIC UPDATES ----------------
+
   // Workouts Handlers
   const handleSaveWorkout = async (workoutPayload) => {
-    if (editingWorkout) {
-      await api.updateWorkout(editingWorkout.id, workoutPayload);
-      showFeedback("Workout updated successfully! Daily progress updated.");
-    } else {
-      await api.addWorkout(workoutPayload);
-      showFeedback("Shabaash! Workout logged successfully! Daily streak & calories synced.");
+    try {
+      if (editingWorkout) {
+        await api.updateWorkout(editingWorkout.id, workoutPayload);
+        showFeedback("Workout updated successfully!");
+      } else {
+        await api.addWorkout(workoutPayload);
+        showFeedback("Workout logged! Calories & streak synced. 🔥");
+      }
+      setEditingWorkout(null);
+      fetchCoreData(true);
+    } catch (err) {
+      alert("Error saving workout: " + err.message);
     }
-    setEditingWorkout(null);
-    fetchAllData();
   };
 
   const handleDeleteWorkout = async (id) => {
     try {
+      // Optimistic delete
+      setWorkouts((prev) => prev.filter((w) => w.id !== id));
       await api.deleteWorkout(id);
       showFeedback("Workout deleted.");
-      fetchAllData();
+      fetchCoreData(true);
     } catch (err) {
       alert("Failed to delete workout: " + err.message);
+      fetchCoreData(true);
     }
   };
 
   // Workout Plans Handlers (Module 7)
   const handleSavePlan = async (planPayload) => {
-    if (editingPlan) {
-      await api.updateWorkoutPlan(editingPlan.id, planPayload);
-      showFeedback("Scheduled workout updated successfully!");
-    } else {
-      await api.createWorkoutPlan(planPayload);
-      showFeedback("Workout successfully scheduled in your calendar! 📅");
+    try {
+      if (editingPlan) {
+        await api.updateWorkoutPlan(editingPlan.id, planPayload);
+        showFeedback("Scheduled workout updated successfully!");
+      } else {
+        await api.createWorkoutPlan(planPayload);
+        showFeedback("Workout scheduled in your calendar! 📅");
+      }
+      setEditingPlan(null);
+      fetchCoreData(true);
+    } catch (err) {
+      alert("Error saving plan: " + err.message);
     }
-    setEditingPlan(null);
-    fetchAllData();
   };
 
   const handleDeletePlan = async (id) => {
     try {
+      // Optimistic delete
+      setPlans((prev) => prev.filter((p) => p.id !== id));
       await api.deleteWorkoutPlan(id);
       showFeedback("Workout plan removed from schedule.");
-      fetchAllData();
+      fetchCoreData(true);
     } catch (err) {
       alert("Failed to delete plan: " + err.message);
+      fetchCoreData(true);
     }
   };
 
   const handleCompletePlan = async (id) => {
     try {
+      // Optimistic completion mark
+      setPlans((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, is_completed: true } : p))
+      );
       await api.completeWorkoutPlan(id);
-      showFeedback("Shabaash! Scheduled workout completed and logged into workout history! 🔥");
-      fetchAllData();
+      showFeedback("Scheduled workout completed and added to history! 💪");
+      fetchCoreData(true);
     } catch (err) {
       alert("Failed to complete workout plan: " + err.message);
+      fetchCoreData(true);
     }
   };
 
   // Exercise Library Handlers (Module 8)
   const handleLogExercise = async (exerciseId, payload) => {
-    await api.logExercise(exerciseId, payload);
-    showFeedback("Exercise logged into workouts! Calories & daily streak updated. 💪");
-    fetchAllData();
+    try {
+      await api.logExercise(exerciseId, payload);
+      showFeedback("Exercise logged! Calories & streak updated. ⚡");
+      fetchCoreData(true);
+    } catch (err) {
+      alert("Failed to log exercise: " + err.message);
+    }
   };
 
   const handleScheduleExercise = async (exerciseId, payload) => {
-    await api.scheduleExercise(exerciseId, payload);
-    showFeedback("Exercise successfully scheduled in calendar planner! 📅");
-    fetchAllData();
+    try {
+      await api.scheduleExercise(exerciseId, payload);
+      showFeedback("Exercise scheduled in calendar! 📅");
+      fetchCoreData(true);
+    } catch (err) {
+      alert("Failed to schedule exercise: " + err.message);
+    }
   };
 
-  // Goals Handlers
+  // Goals Handlers (Module 4)
   const handleSaveGoal = async (goalPayload) => {
-    if (editingGoal) {
-      await api.updateGoal(editingGoal.id, goalPayload);
-      showFeedback("Goal updated successfully!");
-    } else {
-      await api.addGoal(goalPayload);
-      showFeedback("New fitness goal created!");
+    try {
+      if (editingGoal) {
+        await api.updateGoal(editingGoal.id, goalPayload);
+        showFeedback("Goal updated successfully!");
+      } else {
+        await api.addGoal(goalPayload);
+        showFeedback("New fitness goal created!");
+      }
+      setEditingGoal(null);
+      fetchCoreData(true);
+    } catch (err) {
+      alert("Error saving goal: " + err.message);
     }
-    setEditingGoal(null);
-    fetchAllData();
   };
 
   const handleUpdateGoalProgress = async (id, currentValue) => {
-    await api.updateGoalProgress(id, currentValue);
-    showFeedback("Goal progress updated!");
-    fetchAllData();
+    try {
+      // Optimistic update
+      setGoals((prev) =>
+        prev.map((g) =>
+          g.id === id
+            ? {
+                ...g,
+                current_value: currentValue,
+                is_completed: currentValue >= g.target_value,
+              }
+            : g
+        )
+      );
+      await api.updateGoalProgress(id, currentValue);
+      showFeedback("Goal progress updated! 🎯");
+      fetchCoreData(true);
+    } catch (err) {
+      alert("Failed to update goal: " + err.message);
+      fetchCoreData(true);
+    }
   };
 
   const handleDeleteGoal = async (id) => {
     try {
+      setGoals((prev) => prev.filter((g) => g.id !== id));
       await api.deleteGoal(id);
       showFeedback("Goal deleted.");
-      fetchAllData();
+      fetchCoreData(true);
     } catch (err) {
       alert("Failed to delete goal: " + err.message);
+      fetchCoreData(true);
     }
   };
 
   // Progress Handlers
   const handleResyncProgress = async () => {
-    const res = await api.resyncProgress();
-    fetchAllData();
-    return res;
+    try {
+      const res = await api.resyncProgress();
+      const records = await api.getDailyProgress(30);
+      setDailyRecords(records || []);
+      fetchCoreData(true);
+      return res;
+    } catch (err) {
+      throw err;
+    }
   };
 
   // Notifications Handlers
@@ -269,7 +358,6 @@ function MainApp() {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
 
-  // Badges Handler (Module 11)
   const handleOpenBadgePopup = (badge) => {
     setSelectedBadge(badge);
     setIsBadgePopupOpen(true);
@@ -281,7 +369,7 @@ function MainApp() {
         <div style={{ width: 50, height: 50, borderRadius: 14, background: "var(--grad-emerald)", display: "flex", alignItems: "center", justifyContent: "center", color: "#042f2e" }} className="pulse-animation">
           <Activity size={28} />
         </div>
-        <span style={{ fontSize: "0.95rem", color: "var(--text-muted)", letterSpacing: "0.05em" }}>INITIALIZING FITTRACK PHASE 2...</span>
+        <span style={{ fontSize: "0.95rem", color: "var(--text-muted)", letterSpacing: "0.05em" }}>INITIALIZING FITTRACK...</span>
       </div>
     );
   }
@@ -326,7 +414,7 @@ function MainApp() {
       {/* Navigation Header */}
       <Navbar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleTabChange}
         onOpenAddWorkout={() => {
           setEditingWorkout(null);
           setIsWorkoutModalOpen(true);
@@ -360,7 +448,7 @@ function MainApp() {
               setEditingPlan(null);
               setIsPlanModalOpen(true);
             }}
-            onNavigateTab={setActiveTab}
+            onNavigateTab={handleTabChange}
             onDeleteWorkout={handleDeleteWorkout}
             onEditWorkout={(w) => {
               setEditingWorkout(w);
@@ -368,6 +456,7 @@ function MainApp() {
             }}
             onCompletePlan={handleCompletePlan}
             onOpenBadgePopup={handleOpenBadgePopup}
+            onUpdateGoalProgress={handleUpdateGoalProgress}
           />
         )}
 
@@ -477,7 +566,7 @@ function MainApp() {
 
       {/* Footer */}
       <footer style={{ borderTop: "1px solid var(--border-subtle)", padding: "20px 24px", textAlign: "center", color: "var(--text-dim)", fontSize: "0.825rem" }}>
-        FitTrack Bharat 🇮🇳 – Phase 2 Advanced Fitness & Workout Management Platform • Made with ❤️ for Indian Fitness Athletes • FastAPI & React
+        FitTrack – Fitness & Workout Management Platform • FastAPI & React
       </footer>
 
       {/* Modals */}
