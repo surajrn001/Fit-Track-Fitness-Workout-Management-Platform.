@@ -13,7 +13,10 @@ import {
   CheckCircle2,
   CalendarDays,
   Zap,
-  RotateCw
+  RotateCw,
+  Droplets,
+  Utensils,
+  Play
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -54,7 +57,12 @@ export default function DashboardPage({
   recentBadges = [],
   weeklyAnalytics = null,
   personalizedData = null,
+  suggestionsData = null,
+  nutritionSummary = null,
+  waterSummary = null,
   onOpenAddWorkout,
+  onStartTimer,
+  onQuickLogSuggestion,
   onOpenAddPlan,
   onNavigateTab,
   onDeleteWorkout,
@@ -195,6 +203,11 @@ export default function DashboardPage({
           <button onClick={onOpenAddWorkout} className="btn-primary" style={{ padding: "12px 20px", display: "flex", alignItems: "center", gap: 8 }}>
             <Plus size={18} strokeWidth={2.5} /> Log Workout
           </button>
+          {onStartTimer && (
+            <button onClick={() => onStartTimer()} className="btn-secondary" style={{ padding: "12px 18px", display: "flex", alignItems: "center", gap: 8 }}>
+              <Clock size={18} color="#34d399" /> Live Timer
+            </button>
+          )}
           <button onClick={onOpenAddPlan} className="btn-secondary" style={{ padding: "12px 18px", display: "flex", alignItems: "center", gap: 8 }}>
             <CalendarDays size={18} /> Schedule Next
           </button>
@@ -701,6 +714,134 @@ export default function DashboardPage({
                 <div>
                   <h4 style={{ fontSize: "0.9rem", fontWeight: 700, margin: 0, color: "var(--text-main)" }}>{b.name}</h4>
                   <span style={{ fontSize: "0.75rem", color: "#fbbf24" }}>Unlocked 🏆</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Daily Fuel & Hydration Snapshot */}
+      {(nutritionSummary || waterSummary) && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 18 }}>
+          <div className="glass-card" style={{ padding: 22 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <Utensils size={18} color="#fbbf24" />
+                <h3 style={{ fontSize: "1.05rem", margin: 0 }}>Today&apos;s Nutrition</h3>
+              </div>
+              <button onClick={() => onNavigateTab("nutrition")} className="btn-ghost" style={{ fontSize: "0.82rem", cursor: "pointer", border: "none" }}>
+                Open Tracker <ChevronRight size={14} />
+              </button>
+            </div>
+            <div style={{ fontSize: "1.55rem", fontWeight: 800, marginBottom: 4 }}>
+              {Math.round(nutritionSummary?.total_calories || 0)}{" "}
+              <span style={{ fontSize: "0.85rem", color: "var(--text-dim)", fontWeight: 500 }}>
+                / {nutritionSummary?.calorie_goal || 2200} kcal
+              </span>
+            </div>
+            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+              Protein {Math.round(nutritionSummary?.total_protein || 0)}g · Carbs {Math.round(nutritionSummary?.total_carbs || 0)}g · Fats {Math.round(nutritionSummary?.total_fats || 0)}g
+            </div>
+          </div>
+
+          <div className="glass-card" style={{ padding: 22 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <Droplets size={18} color="#22d3ee" />
+                <h3 style={{ fontSize: "1.05rem", margin: 0 }}>Today&apos;s Hydration</h3>
+              </div>
+              <button onClick={() => onNavigateTab("nutrition")} className="btn-ghost" style={{ fontSize: "0.82rem", cursor: "pointer", border: "none" }}>
+                Add Water <ChevronRight size={14} />
+              </button>
+            </div>
+            <div style={{ fontSize: "1.55rem", fontWeight: 800, color: "#22d3ee", marginBottom: 8 }}>
+              {(waterSummary?.liters_consumed ?? 0).toFixed(2)} L{" "}
+              <span style={{ fontSize: "0.85rem", color: "var(--text-dim)", fontWeight: 500 }}>
+                / {(waterSummary?.goal_liters ?? 2.5).toFixed(1)} L ({waterSummary?.progress_percentage ?? 0}%)
+              </span>
+            </div>
+            <div style={{ height: 7, borderRadius: 99, background: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
+              <div
+                style={{
+                  width: `${waterSummary?.progress_percentage ?? 0}%`,
+                  height: "100%",
+                  background: "linear-gradient(90deg, #06b6d4, #3b82f6)",
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Recommended Workouts Section */}
+      {suggestionsData?.suggestions?.length > 0 && (
+        <div className="glass-card" style={{ padding: "24px 28px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10, marginBottom: 18 }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                <Sparkles size={18} color="#34d399" />
+                <h3 style={{ fontSize: "1.15rem", fontWeight: 700, margin: 0 }}>Recommended Workouts</h3>
+              </div>
+              <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", margin: 0 }}>
+                {suggestionsData.focus_summary}
+              </p>
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16 }}>
+            {suggestionsData.suggestions.map((rec, idx) => (
+              <div
+                key={idx}
+                style={{
+                  padding: 18,
+                  borderRadius: "var(--radius-md)",
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid var(--border-subtle)",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  gap: 12,
+                }}
+              >
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                    <span className={`badge badge-${rec.category.toLowerCase()}`}>{rec.category}</span>
+                    <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                      {rec.suggested_duration_mins}m · ~{Math.round(rec.estimated_calories)} kcal
+                    </span>
+                  </div>
+                  <h4 style={{ fontSize: "0.98rem", margin: "0 0 6px 0", color: "#fff" }}>{rec.title}</h4>
+                  <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", margin: "0 0 10px 0", lineHeight: 1.45 }}>
+                    {rec.reason}
+                  </p>
+                  <ul style={{ margin: 0, paddingLeft: 16, fontSize: "0.76rem", color: "var(--text-dim)", lineHeight: 1.5 }}>
+                    {rec.exercises.map((ex, i) => (
+                      <li key={i}>{ex}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                  {onStartTimer && (
+                    <button
+                      type="button"
+                      onClick={() => onStartTimer(rec)}
+                      className="btn btn-primary btn-sm"
+                      style={{ flex: 1 }}
+                    >
+                      <Play size={13} /> Start Timer
+                    </button>
+                  )}
+                  {onQuickLogSuggestion && (
+                    <button
+                      type="button"
+                      onClick={() => onQuickLogSuggestion(rec)}
+                      className="btn btn-secondary btn-sm"
+                    >
+                      Quick Log
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

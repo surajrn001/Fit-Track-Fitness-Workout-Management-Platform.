@@ -4,10 +4,13 @@ import { Award, PieChart, Printer } from "lucide-react";
 export default function AnalyticsPage({
   weeklyData = null,
   monthlyData = null,
+  advancedWeekly = null,
+  advancedMonthly = null,
 }) {
   const [viewMode, setViewMode] = useState("weekly"); // 'weekly' or 'monthly'
 
   const activeData = viewMode === "weekly" ? weeklyData : monthlyData;
+  const adv = viewMode === "weekly" ? advancedWeekly : advancedMonthly;
   const daysList = viewMode === "weekly" ? (weeklyData?.days || []) : (monthlyData?.daily_data || []);
   const categories = activeData?.categories || [];
 
@@ -311,56 +314,98 @@ export default function AnalyticsPage({
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            <div
-              style={{
-                padding: "14px 16px",
-                borderRadius: 12,
-                background: "rgba(16, 185, 129, 0.08)",
-                border: "1px solid rgba(16, 185, 129, 0.2)",
-              }}
-            >
-              <h4 style={{ fontSize: "0.95rem", color: "var(--emerald-primary)", margin: "0 0 4px 0" }}>
-                🧘 Balance & Mobility
-              </h4>
-              <p style={{ fontSize: "0.825rem", color: "var(--text-main)", margin: 0, lineHeight: 1.5 }}>
-                Your regular yoga and stretching sessions cultivate mobility and lung endurance, balancing out heavy resistance training.
+            {adv?.insights?.length > 0 ? (
+              adv.insights.map((text, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    padding: "12px 16px",
+                    borderRadius: 12,
+                    background: "rgba(16, 185, 129, 0.08)",
+                    border: "1px solid rgba(16, 185, 129, 0.2)",
+                  }}
+                >
+                  <p style={{ fontSize: "0.86rem", color: "var(--text-main)", margin: 0, lineHeight: 1.5 }}>{text}</p>
+                </div>
+              ))
+            ) : (
+              <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", margin: 0 }}>
+                Log workouts, meals, and goals to unlock training insights for this period.
               </p>
-            </div>
-
-            <div
-              style={{
-                padding: "14px 16px",
-                borderRadius: 12,
-                background: "rgba(249, 115, 22, 0.08)",
-                border: "1px solid rgba(249, 115, 22, 0.2)",
-              }}
-            >
-              <h4 style={{ fontSize: "0.95rem", color: "#fb923c", margin: "0 0 4px 0" }}>
-                🏃 Cardiovascular Conditioning
-              </h4>
-              <p style={{ fontSize: "0.825rem", color: "var(--text-main)", margin: 0, lineHeight: 1.5 }}>
-                Accumulated {Math.round(activeData?.total_calories || 0).toLocaleString()} calories burned. Outdoor running and interval drills maintain strong cardiovascular health.
-              </p>
-            </div>
-
-            <div
-              style={{
-                padding: "14px 16px",
-                borderRadius: 12,
-                background: "rgba(99, 102, 241, 0.08)",
-                border: "1px solid rgba(99, 102, 241, 0.2)",
-              }}
-            >
-              <h4 style={{ fontSize: "0.95rem", color: "#818cf8", margin: "0 0 4px 0" }}>
-                🚶 Active Recovery
-              </h4>
-              <p style={{ fontSize: "0.825rem", color: "var(--text-main)", margin: 0, lineHeight: 1.5 }}>
-                Low-intensity walks promote active recovery, maintain daily step targets, and support overall joint and metabolic health.
-              </p>
-            </div>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Consistency, Goal Completion & Weekday Activity */}
+      {adv && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
+          <div className="glass-card" style={{ padding: 24 }}>
+            <h3 style={{ fontSize: "1.1rem", margin: "0 0 16px 0" }}>Consistency & Goal Performance</h3>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+              <div style={{ padding: 14, borderRadius: 12, background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-subtle)" }}>
+                <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>Workout Consistency</div>
+                <div style={{ fontSize: "1.6rem", fontWeight: 800, color: "#34d399", marginTop: 4 }}>{adv.consistency_score}%</div>
+                <div style={{ fontSize: "0.75rem", color: "var(--text-dim)" }}>
+                  {adv.active_days} / {adv.total_period_days} active days
+                </div>
+              </div>
+              <div style={{ padding: 14, borderRadius: 12, background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-subtle)" }}>
+                <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>Goal Completion Rate</div>
+                <div style={{ fontSize: "1.6rem", fontWeight: 800, color: "#fbbf24", marginTop: 4 }}>{adv.goal_completion_rate}%</div>
+                <div style={{ fontSize: "0.75rem", color: "var(--text-dim)" }}>
+                  {adv.completed_goals} / {adv.total_goals} completed
+                </div>
+              </div>
+              <div style={{ padding: 14, borderRadius: 12, background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-subtle)" }}>
+                <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>Avg Intake vs Burn</div>
+                <div style={{ fontSize: "1.15rem", fontWeight: 700, marginTop: 4 }}>
+                  {Math.round(adv.avg_daily_intake)} / {Math.round(adv.avg_daily_burn)}
+                </div>
+                <div style={{ fontSize: "0.74rem", color: "var(--text-dim)" }}>kcal eaten / burned daily</div>
+              </div>
+              <div style={{ padding: 14, borderRadius: 12, background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-subtle)" }}>
+                <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>Avg Daily Hydration</div>
+                <div style={{ fontSize: "1.35rem", fontWeight: 800, color: "#22d3ee", marginTop: 4 }}>{adv.avg_daily_water_liters} L</div>
+                <div style={{ fontSize: "0.74rem", color: "var(--text-dim)" }}>
+                  Top day: {adv.best_weekday || "—"}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="glass-card" style={{ padding: 24 }}>
+            <h3 style={{ fontSize: "1.1rem", margin: "0 0 16px 0" }}>Weekday Training Pattern</h3>
+            <div style={{ display: "flex", alignItems: "flex-end", gap: 10, height: 170, paddingTop: 10 }}>
+              {(() => {
+                const maxWdCals = Math.max(100, ...(adv.weekday_breakdown || []).map((w) => w.calories));
+                return (adv.weekday_breakdown || []).map((wd) => {
+                  const barH = Math.max(6, Math.round((wd.calories / maxWdCals) * 120));
+                  const isBest = wd.day === adv.best_weekday;
+                  return (
+                    <div key={wd.day} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                      <span style={{ fontSize: "0.7rem", color: "var(--text-dim)" }}>{wd.workouts}x</span>
+                      <div
+                        title={`${wd.day}: ${wd.workouts} session(s), ${Math.round(wd.calories)} kcal`}
+                        style={{
+                          width: "100%",
+                          maxWidth: 28,
+                          height: barH,
+                          borderRadius: "6px 6px 2px 2px",
+                          background: isBest ? "var(--grad-emerald)" : "rgba(99, 102, 241, 0.55)",
+                        }}
+                      />
+                      <span style={{ fontSize: "0.76rem", fontWeight: isBest ? 700 : 500, color: isBest ? "#34d399" : "var(--text-muted)" }}>
+                        {wd.day}
+                      </span>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

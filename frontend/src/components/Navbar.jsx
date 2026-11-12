@@ -1,41 +1,46 @@
 import React, { useState, useRef, useEffect } from "react";
-import { 
-  Activity, 
-  Dumbbell, 
-  Calendar, 
-  Target, 
-  BarChart3, 
-  Plus, 
-  Bell, 
-  LogOut, 
+import {
+  Activity,
+  Dumbbell,
+  Calendar,
+  Target,
+  BarChart3,
+  Plus,
+  Bell,
+  LogOut,
   Menu,
   X,
   CalendarDays,
   BookOpen,
   TrendingUp,
   Award,
-  Flame
+  Flame,
+  Utensils,
+  Settings,
+  Clock,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import NotificationsDropdown from "./NotificationsDropdown";
+import { formatElapsedClock } from "./WorkoutTimerModal";
 
-export default function Navbar({ 
-  activeTab, 
-  setActiveTab, 
-  onOpenAddWorkout, 
-  notifications = [], 
-  unreadCount = 0, 
-  onMarkRead, 
-  onMarkAllRead, 
+export default function Navbar({
+  activeTab,
+  setActiveTab,
+  onOpenAddWorkout,
+  onOpenTimer,
+  timerState = { elapsedSeconds: 0, isRunning: false },
+  notifications = [],
+  unreadCount = 0,
+  onMarkRead,
+  onMarkAllRead,
   onDeleteNotification,
-  currentStreak = 0
+  currentStreak = 0,
 }) {
   const { user, logout } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const notifRef = useRef(null);
 
-  // Close notifications dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
       if (notifRef.current && !notifRef.current.contains(event.target)) {
@@ -49,6 +54,7 @@ export default function Navbar({
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: Activity },
     { id: "workouts", label: "Workouts", icon: Dumbbell },
+    { id: "nutrition", label: "Nutrition", icon: Utensils },
     { id: "schedule", label: "Schedule", icon: CalendarDays },
     { id: "exercises", label: "Library", icon: BookOpen },
     { id: "progress", label: "Progress", icon: Calendar },
@@ -56,7 +62,10 @@ export default function Navbar({
     { id: "goals", label: "Goals", icon: Target },
     { id: "badges", label: "Badges", icon: Award },
     { id: "analytics", label: "Analytics", icon: BarChart3 },
+    { id: "settings", label: "Sync & Alerts", icon: Settings },
   ];
+
+  const isTimerActive = timerState.isRunning || timerState.elapsedSeconds > 0;
 
   return (
     <header
@@ -64,118 +73,86 @@ export default function Navbar({
         position: "sticky",
         top: 0,
         zIndex: 100,
-        background: "rgba(11, 15, 25, 0.88)",
+        background: "rgba(11, 15, 25, 0.9)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
         borderBottom: "1px solid var(--border-subtle)",
       }}
     >
+      {/* Top Action Tier */}
       <div
         style={{
           maxWidth: 1300,
           margin: "0 auto",
           padding: "0 24px",
-          height: 72,
+          height: 62,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          gap: 20,
+          gap: 16,
         }}
       >
-        {/* Brand with Indian Flag / Saffron Accent */}
+        {/* Brand */}
         <div
           onClick={() => setActiveTab("dashboard")}
           style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", userSelect: "none" }}
         >
           <div
             style={{
-              width: 42,
-              height: 42,
-              borderRadius: 12,
+              width: 38,
+              height: 38,
+              borderRadius: 11,
               background: "linear-gradient(135deg, #f97316 0%, #10b981 100%)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "#042f2e",
-              boxShadow: "0 0 20px rgba(249, 115, 22, 0.35)",
+              boxShadow: "0 0 18px rgba(249, 115, 22, 0.35)",
             }}
           >
-            <Activity size={24} strokeWidth={2.8} color="#fff" />
+            <Activity size={22} strokeWidth={2.8} color="#fff" />
           </div>
-          <div>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
-              <span style={{ fontSize: "1.45rem", fontWeight: 800, fontFamily: "var(--font-display)", letterSpacing: "-0.03em" }}>
-                Fit<span className="text-gradient">Track</span>
-              </span>
-              <span
-                style={{
-                  fontSize: "0.65rem",
-                  textTransform: "uppercase",
-                  fontWeight: 800,
-                  letterSpacing: "0.1em",
-                  color: "var(--emerald-primary)",
-                  padding: "1px 6px",
-                  borderRadius: 4,
-                  background: "rgba(16, 185, 129, 0.15)",
-                  border: "1px solid rgba(16, 185, 129, 0.3)",
-                }}
-              >
-                PRO
-              </span>
-            </div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
+            <span style={{ fontSize: "1.35rem", fontWeight: 800, fontFamily: "var(--font-display)", letterSpacing: "-0.03em" }}>
+              Fit<span className="text-gradient">Track</span>
+            </span>
+            <span
+              style={{
+                fontSize: "0.62rem",
+                textTransform: "uppercase",
+                fontWeight: 800,
+                letterSpacing: "0.1em",
+                color: "var(--emerald-primary)",
+                padding: "1px 6px",
+                borderRadius: 4,
+                background: "rgba(16, 185, 129, 0.15)",
+                border: "1px solid rgba(16, 185, 129, 0.3)",
+              }}
+            >
+              PRO
+            </span>
           </div>
         </div>
 
-        {/* Desktop Nav Links */}
-        <nav
-          style={{
-            display: "none",
-            gap: 6,
-            background: "rgba(255, 255, 255, 0.03)",
-            padding: "4px 6px",
-            borderRadius: "var(--radius-full)",
-            border: "1px solid var(--border-subtle)",
-          }}
-          className="desktop-nav"
-        >
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "8px 16px",
-                  borderRadius: "var(--radius-full)",
-                  fontSize: "0.875rem",
-                  fontWeight: 600,
-                  border: "none",
-                  cursor: "pointer",
-                  transition: "all var(--transition-fast)",
-                  background: isActive ? "var(--grad-emerald)" : "transparent",
-                  color: isActive ? "#042f2e" : "var(--text-muted)",
-                  boxShadow: isActive ? "0 4px 14px rgba(16, 185, 129, 0.3)" : "none",
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive) e.currentTarget.style.color = "#fff";
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) e.currentTarget.style.color = "var(--text-muted)";
-                }}
-              >
-                <Icon size={16} strokeWidth={isActive ? 2.5 : 2} />
-                {item.label}
-              </button>
-            );
-          })}
-        </nav>
+        {/* Right Controls */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {/* Live Timer Trigger */}
+          <button
+            type="button"
+            onClick={onOpenTimer}
+            className="btn btn-secondary btn-sm"
+            style={{
+              padding: "6px 12px",
+              borderColor: isTimerActive ? "rgba(16, 185, 129, 0.5)" : undefined,
+              background: isTimerActive ? "rgba(16, 185, 129, 0.14)" : undefined,
+              color: isTimerActive ? "#34d399" : undefined,
+              fontFamily: isTimerActive ? "var(--font-mono)" : undefined,
+            }}
+            title="Live Workout Timer"
+          >
+            <Clock size={15} />
+            <span>{isTimerActive ? formatElapsedClock(timerState.elapsedSeconds) : "Timer"}</span>
+          </button>
 
-        {/* Right Actions */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           {/* Live Streak Pill */}
           <div
             onClick={() => setActiveTab("dashboard")}
@@ -183,20 +160,20 @@ export default function Navbar({
               display: "flex",
               alignItems: "center",
               gap: 6,
-              padding: "6px 12px",
+              padding: "6px 11px",
               borderRadius: 10,
               background: "rgba(249, 115, 22, 0.12)",
               border: "1px solid rgba(249, 115, 22, 0.3)",
               color: "#fb923c",
-              fontSize: "0.825rem",
+              fontSize: "0.8rem",
               fontWeight: 800,
               cursor: "pointer",
               userSelect: "none",
             }}
             title="Current Workout Streak"
           >
-            <Flame size={16} className={currentStreak > 0 ? "flame-active" : ""} />
-            <span>{currentStreak}d Streak</span>
+            <Flame size={15} className={currentStreak > 0 ? "flame-active" : ""} />
+            <span>{currentStreak}d</span>
           </div>
 
           {/* Quick Log Workout */}
@@ -206,8 +183,8 @@ export default function Navbar({
             style={{ display: "none" }}
             id="quick-log-btn"
           >
-            <Plus size={16} strokeWidth={2.5} />
-            <span>+ Log</span>
+            <Plus size={15} strokeWidth={2.5} />
+            <span>Log</span>
           </button>
 
           {/* Notifications Bell */}
@@ -216,8 +193,8 @@ export default function Navbar({
               onClick={() => setShowNotifications(!showNotifications)}
               className="btn-secondary"
               style={{
-                width: 40,
-                height: 40,
+                width: 38,
+                height: 38,
                 padding: 0,
                 borderRadius: 10,
                 display: "flex",
@@ -228,7 +205,7 @@ export default function Navbar({
               }}
               title="Notifications & Reminders"
             >
-              <Bell size={18} />
+              <Bell size={17} />
               {unreadCount > 0 && (
                 <span
                   style={{
@@ -261,19 +238,20 @@ export default function Navbar({
                 onMarkAllRead={onMarkAllRead}
                 onDelete={onDeleteNotification}
                 onOpenLogWorkout={onOpenAddWorkout}
+                onOpenNutrition={() => setActiveTab("nutrition")}
                 onClose={() => setShowNotifications(false)}
               />
             )}
           </div>
 
-          {/* User profile & Sign Out */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {/* Account & Sign Out */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
                 gap: 8,
-                padding: "6px 14px",
+                padding: "5px 12px",
                 borderRadius: 10,
                 background: "rgba(255, 255, 255, 0.04)",
                 border: "1px solid var(--border-subtle)",
@@ -281,9 +259,9 @@ export default function Navbar({
             >
               <div
                 style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 8,
+                  width: 26,
+                  height: 26,
+                  borderRadius: 7,
                   background: "linear-gradient(135deg, #f97316 0%, #10b981 100%)",
                   display: "flex",
                   alignItems: "center",
@@ -295,8 +273,8 @@ export default function Navbar({
               >
                 {user?.username?.charAt(0).toUpperCase() || "A"}
               </div>
-              <span style={{ fontSize: "0.85rem", fontWeight: 600, maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {user?.username ? (user.username.split('_')[0].charAt(0).toUpperCase() + user.username.split('_')[0].slice(1)) : "Account"}
+              <span style={{ fontSize: "0.82rem", fontWeight: 600, maxWidth: 105, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {user?.username ? user.username.split("_")[0].charAt(0).toUpperCase() + user.username.split("_")[0].slice(1) : "Account"}
               </span>
             </div>
 
@@ -304,8 +282,8 @@ export default function Navbar({
               onClick={logout}
               className="btn-ghost"
               style={{
-                width: 38,
-                height: 38,
+                width: 36,
+                height: 36,
                 padding: 0,
                 borderRadius: 10,
                 display: "flex",
@@ -319,7 +297,7 @@ export default function Navbar({
               onMouseEnter={(e) => (e.currentTarget.style.color = "#ef4444")}
               onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-dim)")}
             >
-              <LogOut size={18} />
+              <LogOut size={17} />
             </button>
           </div>
 
@@ -334,6 +312,64 @@ export default function Navbar({
         </div>
       </div>
 
+      {/* Desktop Nav Tier */}
+      <div
+        className="desktop-nav"
+        style={{
+          display: "none",
+          borderTop: "1px solid rgba(255, 255, 255, 0.05)",
+          background: "rgba(15, 23, 42, 0.5)",
+        }}
+      >
+        <nav
+          style={{
+            maxWidth: 1300,
+            width: "100%",
+            margin: "0 auto",
+            padding: "8px 24px",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            flexWrap: "wrap",
+          }}
+        >
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "6px 12px",
+                  borderRadius: "var(--radius-full)",
+                  fontSize: "0.81rem",
+                  fontWeight: 600,
+                  border: "none",
+                  cursor: "pointer",
+                  transition: "all var(--transition-fast)",
+                  background: isActive ? "var(--grad-emerald)" : "transparent",
+                  color: isActive ? "#042f2e" : "var(--text-muted)",
+                  boxShadow: isActive ? "0 3px 12px rgba(16, 185, 129, 0.25)" : "none",
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) e.currentTarget.style.color = "#fff";
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) e.currentTarget.style.color = "var(--text-muted)";
+                }}
+              >
+                <Icon size={14} strokeWidth={isActive ? 2.5 : 2} />
+                {item.label}
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+
       {/* Mobile Nav dropdown */}
       {mobileMenuOpen && (
         <div
@@ -343,7 +379,9 @@ export default function Navbar({
             borderBottom: "1px solid var(--border-subtle)",
             display: "flex",
             flexDirection: "column",
-            gap: 8,
+            gap: 6,
+            maxHeight: "75vh",
+            overflowY: "auto",
           }}
         >
           {navItems.map((item) => {
@@ -382,12 +420,12 @@ export default function Navbar({
       )}
 
       <style>{`
-        @media (min-width: 1100px) {
-          .desktop-nav { display: flex !important; }
+        @media (min-width: 1024px) {
+          .desktop-nav { display: block !important; }
           #quick-log-btn { display: inline-flex !important; }
           .mobile-menu-btn { display: none !important; }
         }
-        @media (max-width: 1099px) {
+        @media (max-width: 1023px) {
           .mobile-menu-btn { display: block !important; }
         }
       `}</style>

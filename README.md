@@ -128,6 +128,22 @@ FitTrack is a full-stack fitness and workout tracking web platform designed to h
 - **`streak` (Phase 2)**: `id`, `user_id` (FK), `current_streak`, `longest_streak`, `last_workout_date`
 - **`badges` (Phase 2)**: `id`, `name`, `description`, `icon`, `category`, `condition_type`, `condition_value`
 - **`user_badges` (Phase 2)**: `id`, `user_id` (FK), `badge_id` (FK), `earned_at`
+- **`meals` (Phase 3)**: `id`, `user_id` (FK), `meal_type`, `food_name`, `calories`, `protein`, `carbs`, `fats`, `meal_date`, `created_at`
+- **`water_tracking` (Phase 3)**: `id`, `user_id` (FK), `quantity`, `date`, `created_at`
+- **`external_integrations` (Phase 3)**: `id`, `user_id` (FK), `provider`, `is_connected`, `daily_steps`, `synced_calories`, `last_synced_at`
+- **`reminder_settings` (Phase 3)**: `id`, `user_id` (FK, unique), `workout_reminder_enabled`, `workout_reminder_time`, `workout_reminder_note`, `meal_reminder_enabled`, `meal_reminder_times`, `water_reminder_enabled`, `water_reminder_interval_mins`, `daily_water_goal_ml`, `daily_calorie_goal`, `updated_at`
+
+---
+
+## Phase 3: Smart Features & Advanced Analytics
+
+- **Nutrition & Meal Tracking**: Log daily meals (`Breakfast`, `Lunch`, `Dinner`, `Snacks`) with calories and protein/carbs/fats macros, review net calorie balance against workout burn, and view 7-day trends.
+- **Water Intake Tracker**: Log hydration entries in milliliters, adjust daily liters targets, and monitor daily progress and weekly consistency.
+- **Workout Recommendations**: Suggests tailored routines and exercises based on recent workout categories, active goals, and streak status, with 1-click logging or timer launch.
+- **Live Workout Timer**: Persistent stopwatch (`Start`, `Pause`, `Reset`) with category calorie burn estimation and direct workout logging on completion.
+- **Third-Party Integrations**: Connect/disconnect `Google Fit` or `Apple Health` and sync daily steps and active minutes into workout history and step goals.
+- **Advanced Analytics**: Weekly/monthly workout consistency score, goal completion rate, calorie intake vs. burn comparison, weekday activity breakdown, and dynamic training insights.
+- **In-App Reminders & Alerts**: Configure workout, meal, and water reminder schedules alongside daily calorie/water targets and evaluate due alerts into the notification bell.
 
 ---
 
@@ -154,8 +170,14 @@ source venv/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Seed sample demo data (30 days of workouts, goals, and notifications)
+# Optional: copy .env.example to .env to customize JWT_SECRET_KEY / DATABASE_URL
+# copy .env.example .env
+
+# Seed sample demo data (workouts, meals, water logs, goals, and notifications)
 python seed.py
+
+# Run automated backend tests (Modules 1-19)
+python test_all_modules.py
 
 # Run FastAPI server
 uvicorn app.main:app --host 127.0.0.1 --port 8010 --reload

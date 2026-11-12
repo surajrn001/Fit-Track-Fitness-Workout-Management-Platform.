@@ -1,7 +1,9 @@
 import os
+from pathlib import Path
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 import bcrypt
+from dotenv import load_dotenv
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -9,10 +11,12 @@ from sqlalchemy.orm import Session
 from .database import get_db
 from .models import User
 
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
 # Configuration
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "fittrack-super-secret-jwt-key-2026-ultra-secure")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", str(60 * 24 * 7)))
 
 security_bearer = HTTPBearer(auto_error=True)
 

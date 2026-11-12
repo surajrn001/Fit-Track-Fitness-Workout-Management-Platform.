@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
-from .routers import auth, workouts, progress, goals, analytics, notifications, plans, exercises, streaks, badges
+from .routers import (
+    auth, workouts, progress, goals, analytics, notifications,
+    plans, exercises, streaks, badges, meals, water, integrations, reminders
+)
 
 # Initialize database tables
 Base.metadata.create_all(bind=engine)
@@ -32,6 +35,10 @@ app.include_router(plans.router)
 app.include_router(exercises.router)
 app.include_router(streaks.router)
 app.include_router(badges.router)
+app.include_router(meals.router)
+app.include_router(water.router)
+app.include_router(integrations.router)
+app.include_router(reminders.router)
 
 
 @app.get("/")

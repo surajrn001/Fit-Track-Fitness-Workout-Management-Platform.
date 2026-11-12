@@ -1,13 +1,20 @@
 from datetime import date, timedelta
-from typing import List
-from fastapi import APIRouter, Depends
+from typing import List, Literal
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from ..database import get_db
 from ..models import User, Workout
-from ..schemas import WeeklyAnalyticsResponse, MonthlyAnalyticsResponse, DailyTrend, CategoryStat
+from ..schemas import (
+    WeeklyAnalyticsResponse,
+    MonthlyAnalyticsResponse,
+    DailyTrend,
+    CategoryStat,
+    AdvancedAnalyticsResponse,
+)
 from ..security import get_current_user
+from ..phase3_crud import get_advanced_analytics
 
 router = APIRouter(prefix="/api/analytics", tags=["Reports & Analytics"])
 
@@ -156,3 +163,13 @@ def get_monthly_analytics(
         daily_data=days_data,
         categories=categories
     )
+
+
+@router.get("/advanced", response_model=AdvancedAnalyticsResponse)
+def read_advanced_analytics(
+    period: Literal["weekly", "monthly"] = Query("monthly", description="Analysis window"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Performance trends, consistency score, goal completion rate, and nutrition balance."""
+    return get_advanced_analytics(db, user_id=current_user.id, period=period)

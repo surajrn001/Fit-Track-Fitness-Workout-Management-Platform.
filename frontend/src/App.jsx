@@ -7,10 +7,12 @@ import GoalModal from "./components/GoalModal";
 import PlanModal from "./components/PlanModal";
 import LogExerciseModal from "./components/LogExerciseModal";
 import BadgePopupModal from "./components/BadgePopupModal";
+import WorkoutTimerModal from "./components/WorkoutTimerModal";
 
 import AuthPage from "./pages/AuthPage";
 import DashboardPage from "./pages/DashboardPage";
 import WorkoutsPage from "./pages/WorkoutsPage";
+import NutritionPage from "./pages/NutritionPage";
 import SchedulePage from "./pages/SchedulePage";
 import ExerciseLibraryPage from "./pages/ExerciseLibraryPage";
 import ProgressPage from "./pages/ProgressPage";
@@ -18,6 +20,7 @@ import ComparisonPage from "./pages/ComparisonPage";
 import GoalsPage from "./pages/GoalsPage";
 import BadgesPage from "./pages/BadgesPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
+import SettingsPage from "./pages/SettingsPage";
 
 import { Activity } from "lucide-react";
 
@@ -42,6 +45,27 @@ function MainApp() {
   const [personalizedData, setPersonalizedData] = useState(null);
   const [weeklyComp, setWeeklyComp] = useState(null);
   const [monthlyComp, setMonthlyComp] = useState(null);
+
+  // Phase 3 Data States
+  const [nutritionDate, setNutritionDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [meals, setMeals] = useState([]);
+  const [nutritionSummary, setNutritionSummary] = useState(null);
+  const [waterSummary, setWaterSummary] = useState(null);
+  const [suggestionsData, setSuggestionsData] = useState(null);
+  const [integrations, setIntegrations] = useState([]);
+  const [reminderSettings, setReminderSettings] = useState(null);
+  const [advancedWeekly, setAdvancedWeekly] = useState(null);
+  const [advancedMonthly, setAdvancedMonthly] = useState(null);
+
+  // Live Workout Timer State
+  const [isTimerModalOpen, setIsTimerModalOpen] = useState(false);
+  const [timerState, setTimerState] = useState({
+    workoutName: "",
+    category: "Cardio",
+    elapsedSeconds: 0,
+    targetMinutes: 30,
+    isRunning: false,
+  });
 
   const [loadingData, setLoadingData] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState(null);
@@ -71,6 +95,20 @@ function MainApp() {
     setTimeout(() => setFeedbackMessage(null), 3500);
   };
 
+  const fetchNutritionData = useCallback(async (targetDate) => {
+    if (!isAuthenticated) return;
+    try {
+      const [mealsList, nSum, wSum] = await Promise.all([
+        api.getMeals({ meal_date: targetDate }).catch(() => []),
+        api.getNutritionSummary(targetDate).catch(() => null),
+        api.getWaterSummary(targetDate).catch(() => null),
+      ]);
+      setMeals(mealsList || []);
+      if (nSum) setNutritionSummary(nSum);
+      if (wSum) setWaterSummary(wSum);
+    } catch (e) {}
+  }, [isAuthenticated]);
+
   // Efficient core data fetcher - targeted and fast
   const fetchCoreData = useCallback(async (silent = false) => {
     if (!isAuthenticated) return;
@@ -85,6 +123,9 @@ function MainApp() {
         notifsData,
         streakData,
         summaryData,
+        suggestionsRes,
+        nutritionRes,
+        waterRes,
       ] = await Promise.all([
         api.getPersonalizedDashboard().catch(() => null),
         api.getWorkouts().catch(() => []),
@@ -94,6 +135,9 @@ function MainApp() {
         api.getNotifications().catch(() => []),
         api.getStreak().catch(() => null),
         api.getSummary().catch(() => null),
+        api.getWorkoutSuggestions().catch(() => null),
+        api.getNutritionSummary().catch(() => null),
+        api.getWaterSummary().catch(() => null),
       ]);
 
       if (personalizedRes) setPersonalizedData(personalizedRes);
@@ -104,12 +148,24 @@ function MainApp() {
       if (notifsData) setNotifications(notifsData);
       if (streakData) setStreak(streakData);
       if (summaryData) setSummary(summaryData);
+      if (suggestionsRes) setSuggestionsData(suggestionsRes);
+      if (nutritionRes) setNutritionSummary(nutritionRes);
+      if (waterRes) setWaterSummary(waterRes);
     } catch (err) {
       console.error("Error loading core FitTrack data:", err);
     } finally {
       if (!silent) setLoadingData(false);
     }
   }, [isAuthenticated]);
+
+  // Live Workout Timer Clock Effect
+  useEffect(() => {
+    if (!timerState.isRunning) return;
+    const id = setInterval(() => {
+      setTimerState((prev) => ({ ...prev, elapsedSeconds: prev.elapsedSeconds + 1 }));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [timerState.isRunning]);
 
   // Load static exercises catalog once
   const loadExercisesOnce = useCallback(async () => {
@@ -129,6 +185,17 @@ function MainApp() {
 
     if (tab === "exercises" && !exercisesLoadedRef.current) {
       loadExercisesOnce();
+    } else if (tab === "nutrition") {
+      fetchNutritionData(nutritionDate);
+    } else if (tab === "settings") {
+      try {
+        const [intList, remSet] = await Promise.all([
+          api.getIntegrations().catch(() => []),
+          api.getReminderSettings().catch(() => null),
+        ]);
+        if (intList) setIntegrations(intList);
+        if (remSet) setReminderSettings(remSet);
+      } catch (e) {}
     } else if (tab === "progress" && dailyRecords.length === 0) {
       try {
         const records = await api.getDailyProgress(30);
@@ -143,17 +210,21 @@ function MainApp() {
         if (w) setWeeklyComp(w);
         if (m) setMonthlyComp(m);
       } catch (e) {}
-    } else if (tab === "analytics" && (!weeklyAnalytics || !monthlyAnalytics)) {
+    } else if (tab === "analytics") {
       try {
-        const [w, m] = await Promise.all([
-          api.getWeeklyAnalytics().catch(() => null),
-          api.getMonthlyAnalytics().catch(() => null),
+        const [w, m, aw, am] = await Promise.all([
+          weeklyAnalytics ? Promise.resolve(weeklyAnalytics) : api.getWeeklyAnalytics().catch(() => null),
+          monthlyAnalytics ? Promise.resolve(monthlyAnalytics) : api.getMonthlyAnalytics().catch(() => null),
+          api.getAdvancedAnalytics("weekly").catch(() => null),
+          api.getAdvancedAnalytics("monthly").catch(() => null),
         ]);
         if (w) setWeeklyAnalytics(w);
         if (m) setMonthlyAnalytics(m);
+        if (aw) setAdvancedWeekly(aw);
+        if (am) setAdvancedMonthly(am);
       } catch (e) {}
     }
-  }, [dailyRecords.length, weeklyComp, monthlyComp, weeklyAnalytics, monthlyAnalytics, loadExercisesOnce]);
+  }, [dailyRecords.length, weeklyComp, monthlyComp, weeklyAnalytics, monthlyAnalytics, nutritionDate, fetchNutritionData, loadExercisesOnce]);
 
   // Initial load
   useEffect(() => {
@@ -336,6 +407,130 @@ function MainApp() {
     }
   };
 
+  // Nutrition & Hydration Handlers
+  const handleChangeNutritionDate = (nextDate) => {
+    setNutritionDate(nextDate);
+    fetchNutritionData(nextDate);
+  };
+
+  const handleCreateMeal = async (payload) => {
+    await api.createMeal(payload);
+    showFeedback("Meal logged.");
+    fetchNutritionData(nutritionDate);
+  };
+
+  const handleUpdateMeal = async (id, payload) => {
+    await api.updateMeal(id, payload);
+    showFeedback("Meal updated.");
+    fetchNutritionData(nutritionDate);
+  };
+
+  const handleDeleteMeal = async (id) => {
+    await api.deleteMeal(id);
+    showFeedback("Meal deleted.");
+    fetchNutritionData(nutritionDate);
+  };
+
+  const handleLogWater = async (payload) => {
+    await api.logWater(payload);
+    showFeedback(`Added ${payload.quantity} ml water.`);
+    fetchNutritionData(nutritionDate);
+  };
+
+  const handleDeleteWaterLog = async (id) => {
+    await api.deleteWaterLog(id);
+    fetchNutritionData(nutritionDate);
+  };
+
+  const handleUpdateWaterGoal = async (goalMl) => {
+    await api.updateWaterGoal(goalMl);
+    showFeedback("Daily water target updated.");
+    fetchNutritionData(nutritionDate);
+  };
+
+  // Live Workout Timer & Suggestions Handlers
+  const handleStartTimer = (preset = null) => {
+    if (preset) {
+      setTimerState({
+        workoutName: preset.title || "",
+        category: preset.category || "Cardio",
+        elapsedSeconds: 0,
+        targetMinutes: preset.suggested_duration_mins || 30,
+        isRunning: true,
+      });
+    }
+    setIsTimerModalOpen(true);
+  };
+
+  const handleSaveTimerWorkout = async (workoutPayload) => {
+    await api.addWorkout(workoutPayload);
+    setTimerState({
+      workoutName: "",
+      category: "Cardio",
+      elapsedSeconds: 0,
+      targetMinutes: 30,
+      isRunning: false,
+    });
+    setIsTimerModalOpen(false);
+    showFeedback("Timed workout saved!");
+    fetchCoreData(true);
+  };
+
+  const handleQuickLogSuggestion = async (rec) => {
+    try {
+      await api.addWorkout({
+        workout_name: rec.title,
+        category: rec.category,
+        duration: rec.suggested_duration_mins,
+        calories_burned: rec.estimated_calories,
+        workout_date: new Date().toISOString().split("T")[0],
+      });
+      showFeedback(`Logged recommended workout: ${rec.title}`);
+      fetchCoreData(true);
+    } catch (err) {
+      showFeedback("Failed to log workout: " + err.message, "error");
+    }
+  };
+
+  // Third-Party Integrations & Reminders Handlers
+  const handleConnectIntegration = async (provider) => {
+    await api.connectIntegration(provider);
+    const updated = await api.getIntegrations();
+    setIntegrations(updated || []);
+    const notifs = await api.getNotifications().catch(() => null);
+    if (notifs) setNotifications(notifs);
+    showFeedback("Integration connected.");
+  };
+
+  const handleDisconnectIntegration = async (provider) => {
+    await api.disconnectIntegration(provider);
+    const updated = await api.getIntegrations();
+    setIntegrations(updated || []);
+    showFeedback("Integration disconnected.");
+  };
+
+  const handleSyncIntegration = async (provider, payload) => {
+    const res = await api.syncIntegration(provider, payload);
+    const updated = await api.getIntegrations();
+    setIntegrations(updated || []);
+    showFeedback(res.message || "Activity synced.");
+    fetchCoreData(true);
+  };
+
+  const handleSaveReminderSettings = async (payload) => {
+    const updated = await api.updateReminderSettings(payload);
+    setReminderSettings(updated);
+    showFeedback("Reminder settings and goals saved.");
+    fetchNutritionData(nutritionDate);
+  };
+
+  const handleCheckReminders = async () => {
+    const res = await api.checkDueReminders();
+    const notifs = await api.getNotifications().catch(() => null);
+    if (notifs) setNotifications(notifs);
+    showFeedback(res.message);
+  };
+
   // Notifications Handlers
   const handleMarkNotificationRead = async (id) => {
     await api.markNotificationRead(id);
@@ -415,6 +610,8 @@ function MainApp() {
           setEditingWorkout(null);
           setIsWorkoutModalOpen(true);
         }}
+        onOpenTimer={() => handleStartTimer()}
+        timerState={timerState}
         notifications={notifications}
         unreadCount={unreadCount}
         onMarkRead={handleMarkNotificationRead}
@@ -435,10 +632,15 @@ function MainApp() {
             recentBadges={badges.filter((b) => b.is_unlocked)}
             weeklyAnalytics={weeklyAnalytics}
             personalizedData={personalizedData}
+            suggestionsData={suggestionsData}
+            nutritionSummary={nutritionSummary}
+            waterSummary={waterSummary}
             onOpenAddWorkout={() => {
               setEditingWorkout(null);
               setIsWorkoutModalOpen(true);
             }}
+            onStartTimer={handleStartTimer}
+            onQuickLogSuggestion={handleQuickLogSuggestion}
             onOpenAddPlan={() => {
               setEditingPlan(null);
               setIsPlanModalOpen(true);
@@ -468,6 +670,22 @@ function MainApp() {
               setIsWorkoutModalOpen(true);
             }}
             onDeleteWorkout={handleDeleteWorkout}
+          />
+        )}
+
+        {activeTab === "nutrition" && (
+          <NutritionPage
+            selectedDate={nutritionDate}
+            onChangeDate={handleChangeNutritionDate}
+            meals={meals}
+            nutritionSummary={nutritionSummary}
+            waterSummary={waterSummary}
+            onCreateMeal={handleCreateMeal}
+            onUpdateMeal={handleUpdateMeal}
+            onDeleteMeal={handleDeleteMeal}
+            onLogWater={handleLogWater}
+            onDeleteWaterLog={handleDeleteWaterLog}
+            onUpdateWaterGoal={handleUpdateWaterGoal}
           />
         )}
 
@@ -547,6 +765,20 @@ function MainApp() {
           <AnalyticsPage
             weeklyData={weeklyAnalytics}
             monthlyData={monthlyAnalytics}
+            advancedWeekly={advancedWeekly}
+            advancedMonthly={advancedMonthly}
+          />
+        )}
+
+        {activeTab === "settings" && (
+          <SettingsPage
+            integrations={integrations}
+            reminderSettings={reminderSettings}
+            onConnectIntegration={handleConnectIntegration}
+            onDisconnectIntegration={handleDisconnectIntegration}
+            onSyncIntegration={handleSyncIntegration}
+            onSaveReminderSettings={handleSaveReminderSettings}
+            onCheckReminders={handleCheckReminders}
           />
         )}
       </main>
@@ -605,6 +837,17 @@ function MainApp() {
           setSelectedBadge(null);
         }}
         badge={selectedBadge}
+      />
+
+      <WorkoutTimerModal
+        isOpen={isTimerModalOpen}
+        onClose={() => setIsTimerModalOpen(false)}
+        timerState={timerState}
+        onStart={() => setTimerState((prev) => ({ ...prev, isRunning: true }))}
+        onPause={() => setTimerState((prev) => ({ ...prev, isRunning: false }))}
+        onReset={() => setTimerState((prev) => ({ ...prev, elapsedSeconds: 0, isRunning: false }))}
+        onUpdateMeta={(patch) => setTimerState((prev) => ({ ...prev, ...patch }))}
+        onFinishAndSave={handleSaveTimerWorkout}
       />
     </div>
   );

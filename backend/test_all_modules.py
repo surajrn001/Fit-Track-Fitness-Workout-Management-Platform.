@@ -1,4 +1,4 @@
-11import os
+import os
 import sys
 
 # Ensure backend directory is in path
@@ -177,9 +177,161 @@ def run_tests():
     assert "greeting" in dash_data and "streak" in dash_data
     print("✓ Module 12 (Personalized Dashboard) passed.")
 
+    # Secondary user token for ownership verification
+    priya_login = client.post("/api/auth/login", json={
+        "email": "priya.patel@fittrack.in",
+        "password": "password123"
+    })
+    assert priya_login.status_code == 200
+    priya_headers = {"Authorization": f"Bearer {priya_login.json()['access_token']}"}
+
+    # Unauthenticated check across Phase 3 routes
+    for protected_url in [
+        "/api/meals/",
+        "/api/water/",
+        "/api/workouts/suggestions",
+        "/api/integrations/",
+        "/api/analytics/advanced",
+        "/api/reminders/settings",
+    ]:
+        unauth = client.get(protected_url)
+        assert unauth.status_code in (401, 403), f"Expected auth block for {protected_url}, got {unauth.status_code}"
+
+    # 13. Nutrition & Meal Tracking (Module 13)
+    bad_meal = client.post("/api/meals/", headers=headers, json={
+        "meal_type": "MidnightFeast",
+        "food_name": "Invalid",
+        "calories": 300
+    })
+    assert bad_meal.status_code == 422
+
+    meal_res = client.post("/api/meals/", headers=headers, json={
+        "meal_type": "Dinner",
+        "food_name": "Test Tandoori Paneer",
+        "calories": 480.0,
+        "protein": 34.0,
+        "carbs": 22.0,
+        "fats": 18.0
+    })
+    assert meal_res.status_code == 201, meal_res.text
+    meal_id = meal_res.json()["id"]
+
+    meals_list = client.get("/api/meals/", headers=headers)
+    assert meals_list.status_code == 200 and any(m["id"] == meal_id for m in meals_list.json())
+
+    meal_edit = client.put(f"/api/meals/{meal_id}", headers=headers, json={"calories": 510.0})
+    assert meal_edit.status_code == 200 and meal_edit.json()["calories"] == 510.0
+
+    # Cross-user ownership check
+    forbidden_meal = client.delete(f"/api/meals/{meal_id}", headers=priya_headers)
+    assert forbidden_meal.status_code == 404
+
+    nut_summary = client.get("/api/meals/summary", headers=headers)
+    assert nut_summary.status_code == 200
+    ns = nut_summary.json()
+    assert "total_calories" in ns and "net_calories" in ns and "by_meal_type" in ns
+
+    del_meal = client.delete(f"/api/meals/{meal_id}", headers=headers)
+    assert del_meal.status_code == 200
+    print("✓ Module 13 (Nutrition & Meal Tracking) passed.")
+
+    # 14. Water Intake Tracker (Module 14)
+    bad_water = client.post("/api/water/", headers=headers, json={"quantity": -100})
+    assert bad_water.status_code == 422
+
+    water_res = client.post("/api/water/", headers=headers, json={"quantity": 350})
+    assert water_res.status_code == 201, water_res.text
+    water_id = water_res.json()["id"]
+
+    water_sum = client.get("/api/water/", headers=headers)
+    assert water_sum.status_code == 200
+    ws = water_sum.json()
+    assert ws["total_ml"] >= 350 and "liters_consumed" in ws and "progress_percentage" in ws
+
+    water_goal = client.put("/api/water/goal", headers=headers, json={"daily_water_goal_ml": 2800})
+    assert water_goal.status_code == 200 and water_goal.json()["daily_water_goal_ml"] == 2800
+    client.put("/api/water/goal", headers=headers, json={"daily_water_goal_ml": 2500})
+
+    forbidden_water = client.delete(f"/api/water/{water_id}", headers=priya_headers)
+    assert forbidden_water.status_code == 404
+
+    del_water = client.delete(f"/api/water/{water_id}", headers=headers)
+    assert del_water.status_code == 200
+    print("✓ Module 14 (Water Intake Tracker) passed.")
+
+    # 15. AI Workout Suggestions (Module 15)
+    sug_res = client.get("/api/workouts/suggestions", headers=headers)
+    assert sug_res.status_code == 200, sug_res.text
+    sug_data = sug_res.json()
+    assert "focus_summary" in sug_data and len(sug_data["suggestions"]) >= 1
+    first_rec = sug_data["suggestions"][0]
+    assert all(k in first_rec for k in ("title", "category", "suggested_duration_mins", "estimated_calories", "reason", "exercises"))
+    print("✓ Module 15 (Workout Suggestions) passed.")
+
+    # 16. Workout Timer Backend Flow (Module 16)
+    timed_w = client.post("/api/workouts/", headers=headers, json={
+        "workout_name": "Timed Cardio Interval",
+        "category": "Cardio",
+        "duration": 18,
+        "calories_burned": 198.0
+    })
+    assert timed_w.status_code == 201
+    client.delete(f"/api/workouts/{timed_w.json()['id']}", headers=headers)
+    print("✓ Module 16 (Workout Timer Save Flow) passed.")
+
+    # 17. Third-Party Integrations (Module 17)
+    int_list = client.get("/api/integrations/", headers=headers)
+    assert int_list.status_code == 200 and len(int_list.json()) >= 2
+
+    conn_res = client.post("/api/integrations/apple_health/connect", headers=headers)
+    assert conn_res.status_code == 200 and conn_res.json()["is_connected"] is True
+
+    sync_int = client.post("/api/integrations/apple_health/sync", headers=headers, json={"steps": 6200})
+    assert sync_int.status_code == 200 and sync_int.json()["steps_synced"] == 6200
+
+    # Clean up the auto-created Apple Health workout
+    latest_workouts = client.get("/api/workouts/", headers=headers).json()
+    for w in latest_workouts:
+        if "Apple Health Sync" in w["workout_name"]:
+            client.delete(f"/api/workouts/{w['id']}", headers=headers)
+
+    disc_res = client.post("/api/integrations/apple_health/disconnect", headers=headers)
+    assert disc_res.status_code == 200 and disc_res.json()["is_connected"] is False
+
+    blocked_sync = client.post("/api/integrations/apple_health/sync", headers=headers, json={"steps": 4000})
+    assert blocked_sync.status_code == 400
+    print("✓ Module 17 (Third-Party Integrations) passed.")
+
+    # 18. Advanced Analytics (Module 18)
+    adv_w = client.get("/api/analytics/advanced?period=weekly", headers=headers)
+    adv_m = client.get("/api/analytics/advanced?period=monthly", headers=headers)
+    assert adv_w.status_code == 200 and adv_m.status_code == 200
+    for payload in (adv_w.json(), adv_m.json()):
+        assert "consistency_score" in payload and "goal_completion_rate" in payload
+        assert len(payload["weekday_breakdown"]) == 7 and len(payload["insights"]) >= 1
+    print("✓ Module 18 (Advanced Analytics) passed.")
+
+    # 19. In-App Reminders & Alerts (Module 19)
+    rem_get = client.get("/api/reminders/settings", headers=headers)
+    assert rem_get.status_code == 200
+
+    bad_time = client.put("/api/reminders/settings", headers=headers, json={"workout_reminder_time": "99:99"})
+    assert bad_time.status_code == 422
+
+    rem_save = client.put("/api/reminders/settings", headers=headers, json={
+        "water_reminder_enabled": True,
+        "water_reminder_interval_mins": 60,
+        "meal_reminder_enabled": True
+    })
+    assert rem_save.status_code == 200 and rem_save.json()["water_reminder_interval_mins"] == 60
+
+    rem_check = client.post("/api/reminders/check", headers=headers)
+    assert rem_check.status_code == 200 and "triggered_count" in rem_check.json()
+    print("✓ Module 19 (In-App Reminders & Alerts) passed.")
+
     # Clean up test workout
     client.delete(f"/api/workouts/{workout_id}", headers=headers)
-    print("\nAll 12 modules tested and verified successfully!")
+    print("\nAll 19 modules tested and verified successfully!")
 
 if __name__ == "__main__":
     run_tests()

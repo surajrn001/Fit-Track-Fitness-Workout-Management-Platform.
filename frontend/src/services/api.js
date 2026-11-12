@@ -118,5 +118,47 @@ export const api = {
 
   // Phase 2: Personalized Dashboard (Module 12)
   getPersonalizedDashboard: () => request("/progress/personalized"),
+
+  // Phase 3: Nutrition & Meals
+  getMeals: (params = {}) => {
+    const searchParams = new URLSearchParams();
+    if (params.meal_date) searchParams.append("meal_date", params.meal_date);
+    if (params.meal_type && params.meal_type !== "All") searchParams.append("meal_type", params.meal_type);
+    const query = searchParams.toString();
+    return request(`/meals/${query ? `?${query}` : ""}`);
+  },
+  createMeal: (payload) => request("/meals/", { method: "POST", body: JSON.stringify(payload) }),
+  updateMeal: (id, payload) => request(`/meals/${id}`, { method: "PUT", body: JSON.stringify(payload) }),
+  deleteMeal: (id) => request(`/meals/${id}`, { method: "DELETE" }),
+  getNutritionSummary: (targetDate) => request(`/meals/summary${targetDate ? `?target_date=${targetDate}` : ""}`),
+
+  // Phase 3: Water Intake Tracker
+  getWaterSummary: (targetDate) => request(`/water/${targetDate ? `?target_date=${targetDate}` : ""}`),
+  logWater: (payload) => request("/water/", { method: "POST", body: JSON.stringify(payload) }),
+  deleteWaterLog: (id) => request(`/water/${id}`, { method: "DELETE" }),
+  updateWaterGoal: (dailyWaterGoalMl) =>
+    request("/water/goal", { method: "PUT", body: JSON.stringify({ daily_water_goal_ml: dailyWaterGoalMl }) }),
+
+  // Phase 3: Workout Suggestions
+  getWorkoutSuggestions: () => request("/workouts/suggestions"),
+
+  // Phase 3: Third-Party Integrations
+  getIntegrations: () => request("/integrations/"),
+  connectIntegration: (provider) => request(`/integrations/${provider}/connect`, { method: "POST" }),
+  disconnectIntegration: (provider) => request(`/integrations/${provider}/disconnect`, { method: "POST" }),
+  syncIntegration: (provider, payload = null) =>
+    request(`/integrations/${provider}/sync`, {
+      method: "POST",
+      ...(payload ? { body: JSON.stringify(payload) } : {}),
+    }),
+
+  // Phase 3: In-App Reminders & Settings
+  getReminderSettings: () => request("/reminders/settings"),
+  updateReminderSettings: (payload) =>
+    request("/reminders/settings", { method: "PUT", body: JSON.stringify(payload) }),
+  checkDueReminders: () => request("/reminders/check", { method: "POST" }),
+
+  // Phase 3: Advanced Analytics
+  getAdvancedAnalytics: (period = "monthly") => request(`/analytics/advanced?period=${period}`),
 };
 

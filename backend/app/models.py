@@ -23,6 +23,10 @@ class User(Base):
     workout_plans = relationship("WorkoutPlan", back_populates="user", cascade="all, delete-orphan")
     streak = relationship("Streak", back_populates="user", uselist=False, cascade="all, delete-orphan")
     badges = relationship("UserBadge", back_populates="user", cascade="all, delete-orphan")
+    meals = relationship("Meal", back_populates="user", cascade="all, delete-orphan")
+    water_logs = relationship("WaterTracking", back_populates="user", cascade="all, delete-orphan")
+    integrations = relationship("ExternalIntegration", back_populates="user", cascade="all, delete-orphan")
+    reminder_setting = relationship("ReminderSetting", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
 class Workout(Base):
     __tablename__ = "workouts"
@@ -133,4 +137,67 @@ class UserBadge(Base):
 
     user = relationship("User", back_populates="badges")
     badge = relationship("Badge", back_populates="user_badges")
+
+
+class Meal(Base):
+    __tablename__ = "meals"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    meal_type = Column(String(30), nullable=False)  # Breakfast, Lunch, Dinner, Snacks
+    food_name = Column(String(120), nullable=False)
+    calories = Column(Float, nullable=False)
+    protein = Column(Float, default=0.0, nullable=False)
+    carbs = Column(Float, default=0.0, nullable=False)
+    fats = Column(Float, default=0.0, nullable=False)
+    meal_date = Column(Date, default=lambda: date.today(), nullable=False, index=True)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
+
+    user = relationship("User", back_populates="meals")
+
+
+class WaterTracking(Base):
+    __tablename__ = "water_tracking"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    quantity = Column(Integer, nullable=False)  # in ml
+    date = Column(Date, default=lambda: date.today(), nullable=False, index=True)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
+
+    user = relationship("User", back_populates="water_logs")
+
+
+class ExternalIntegration(Base):
+    __tablename__ = "external_integrations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    provider = Column(String(40), nullable=False, index=True)  # google_fit, apple_health
+    is_connected = Column(Boolean, default=False, nullable=False)
+    daily_steps = Column(Integer, default=0, nullable=False)
+    synced_calories = Column(Float, default=0.0, nullable=False)
+    last_synced_at = Column(DateTime, nullable=True)
+
+    user = relationship("User", back_populates="integrations")
+
+
+class ReminderSetting(Base):
+    __tablename__ = "reminder_settings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
+    workout_reminder_enabled = Column(Boolean, default=True, nullable=False)
+    workout_reminder_time = Column(String(10), default="07:00", nullable=False)
+    workout_reminder_note = Column(String(255), default="Time for today's workout session", nullable=False)
+    meal_reminder_enabled = Column(Boolean, default=True, nullable=False)
+    meal_reminder_times = Column(String(100), default="08:30, 13:00, 20:00", nullable=False)
+    water_reminder_enabled = Column(Boolean, default=True, nullable=False)
+    water_reminder_interval_mins = Column(Integer, default=90, nullable=False)
+    daily_water_goal_ml = Column(Integer, default=2500, nullable=False)
+    daily_calorie_goal = Column(Integer, default=2200, nullable=False)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
+
+    user = relationship("User", back_populates="reminder_setting")
+
 

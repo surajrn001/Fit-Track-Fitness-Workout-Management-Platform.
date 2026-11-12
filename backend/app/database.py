@@ -1,10 +1,13 @@
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 # Deterministically locate fittrack.db in backend folder
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")
+
 DB_FILE = BASE_DIR / "fittrack.db"
 DEFAULT_DB_URL = f"sqlite:///{DB_FILE.as_posix()}"
 

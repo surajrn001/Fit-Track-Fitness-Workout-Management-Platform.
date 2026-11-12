@@ -9,7 +9,8 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from app.database import SessionLocal, Base, engine
 from app.models import (
     User, Workout, Progress, Goal, Notification,
-    WorkoutPlan, Exercise, Streak, Badge, UserBadge
+    WorkoutPlan, Exercise, Streak, Badge, UserBadge,
+    Meal, WaterTracking, ExternalIntegration, ReminderSetting
 )
 from app.security import hash_password
 from app.crud import sync_daily_progress, update_user_streak, check_and_award_badges
@@ -139,6 +140,10 @@ def seed_database():
                 db.query(WorkoutPlan).filter(WorkoutPlan.user_id == existing.id).delete()
                 db.query(UserBadge).filter(UserBadge.user_id == existing.id).delete()
                 db.query(Streak).filter(Streak.user_id == existing.id).delete()
+                db.query(Meal).filter(Meal.user_id == existing.id).delete()
+                db.query(WaterTracking).filter(WaterTracking.user_id == existing.id).delete()
+                db.query(ExternalIntegration).filter(ExternalIntegration.user_id == existing.id).delete()
+                db.query(ReminderSetting).filter(ReminderSetting.user_id == existing.id).delete()
                 db.delete(existing)
                 db.commit()
 
@@ -309,7 +314,79 @@ def seed_database():
                 update_user_streak(db, user.id)
                 check_and_award_badges(db, user.id)
 
-        print("\nFitTrack Phase 2 database seeded successfully!")
+                # Seed sample Meals & Water Tracking (past 7 days + today)
+                print(f"Seeding nutrition, hydration, and reminder settings for {user.username}...")
+                sample_meals_menu = [
+                    ("Breakfast", "Masala Oats & Almonds", 360.0, 14.0, 52.0, 10.0),
+                    ("Breakfast", "Moong Dal Chilla with Curd", 390.0, 20.0, 48.0, 11.0),
+                    ("Lunch", "Rajma Chawal & Cucumber Salad", 580.0, 22.0, 88.0, 12.0),
+                    ("Lunch", "Paneer Bhurji & 2 Multigrain Rotis", 610.0, 32.0, 58.0, 24.0),
+                    ("Snacks", "Roasted Makhana & Green Tea", 165.0, 5.0, 26.0, 4.0),
+                    ("Snacks", "Banana Whey Smoothie", 250.0, 24.0, 31.0, 3.0),
+                    ("Dinner", "Grilled Tandoori Paneer & Quinoa", 490.0, 34.0, 42.0, 18.0),
+                    ("Dinner", "Dal Tadka, Jeera Rice & Stir-Fry Greens", 520.0, 19.0, 76.0, 14.0),
+                ]
+                for offset in range(6, -1, -1):
+                    m_date = today - timedelta(days=offset)
+                    day_picks = [
+                        sample_meals_menu[offset % 2],
+                        sample_meals_menu[2 + (offset % 2)],
+                        sample_meals_menu[4 + (offset % 2)],
+                        sample_meals_menu[6 + (offset % 2)],
+                    ]
+                    if offset == 0:
+                        day_picks = day_picks[:3]  # Leave room for dinner logging today
+                    for m_type, f_name, cals, prot, carbs, fats in day_picks:
+                        db.add(Meal(
+                            user_id=user.id,
+                            meal_type=m_type,
+                            food_name=f_name,
+                            calories=cals,
+                            protein=prot,
+                            carbs=carbs,
+                            fats=fats,
+                            meal_date=m_date,
+                        ))
+
+                    # Water logs (2000-2750 ml past days, 1500 ml today)
+                    water_entries = [500, 500, 500] if offset == 0 else [500, 750, 500, 500]
+                    for qty in water_entries:
+                        db.add(WaterTracking(
+                            user_id=user.id,
+                            quantity=qty,
+                            date=m_date,
+                        ))
+
+                db.add(ReminderSetting(
+                    user_id=user.id,
+                    workout_reminder_enabled=True,
+                    workout_reminder_time="07:00",
+                    workout_reminder_note="Complete your morning training session",
+                    meal_reminder_enabled=True,
+                    meal_reminder_times="08:30, 13:30, 20:00",
+                    water_reminder_enabled=True,
+                    water_reminder_interval_mins=90,
+                    daily_water_goal_ml=2500,
+                    daily_calorie_goal=2200,
+                ))
+                db.add(ExternalIntegration(
+                    user_id=user.id,
+                    provider="google_fit",
+                    is_connected=True,
+                    daily_steps=7840,
+                    synced_calories=313.6,
+                    last_synced_at=datetime.now(timezone.utc) - timedelta(hours=3),
+                ))
+                db.add(ExternalIntegration(
+                    user_id=user.id,
+                    provider="apple_health",
+                    is_connected=False,
+                    daily_steps=0,
+                    synced_calories=0.0,
+                ))
+                db.commit()
+
+        print("\nFitTrack Phase 3 database seeded successfully!")
         print("Primary Indian Demo Account:")
         print("   Email: arjun.sharma@fittrack.in")
         print("   Password: password123")

@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models import User, Workout
-from ..schemas import WorkoutCreate, WorkoutUpdate, WorkoutResponse
+from ..schemas import WorkoutCreate, WorkoutUpdate, WorkoutResponse, SuggestionsResponse
 from ..security import get_current_user
 from ..crud import (
     create_workout,
@@ -14,6 +14,7 @@ from ..crud import (
     update_workout,
     delete_workout
 )
+from ..phase3_crud import get_workout_suggestions
 
 router = APIRouter(prefix="/api/workouts", tags=["Workouts"])
 
@@ -31,6 +32,14 @@ CATEGORIES = [
 def get_categories():
     """Return available workout categories with metadata."""
     return CATEGORIES
+
+@router.get("/suggestions", response_model=SuggestionsResponse)
+def read_workout_suggestions(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Return tailored workout recommendations based on history, goals, and streak."""
+    return get_workout_suggestions(db, user_id=current_user.id)
 
 @router.get("/", response_model=List[WorkoutResponse])
 def read_workouts(

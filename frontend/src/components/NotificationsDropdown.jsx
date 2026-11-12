@@ -20,6 +20,7 @@ export default function NotificationsDropdown({
   onMarkAllRead,
   onDelete,
   onOpenLogWorkout,
+  onOpenNutrition,
   onClose,
 }) {
   const getIcon = (title) => {
@@ -168,19 +169,28 @@ export default function NotificationsDropdown({
                   {item.message}
                 </p>
 
-                {item.title.toLowerCase().includes("reminder") && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (onOpenLogWorkout) onOpenLogWorkout();
-                      if (onClose) onClose();
-                    }}
-                    className="btn btn-primary btn-sm"
-                    style={{ marginTop: 8, fontSize: "0.725rem", padding: "3px 8px" }}
-                  >
-                    Log Workout Now
-                  </button>
-                )}
+                {item.title.toLowerCase().includes("reminder") && (() => {
+                  const isNutritionOrWater =
+                    item.title.toLowerCase().includes("meal") ||
+                    item.title.toLowerCase().includes("hydration");
+                  return (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isNutritionOrWater && onOpenNutrition) {
+                          onOpenNutrition();
+                        } else if (onOpenLogWorkout) {
+                          onOpenLogWorkout();
+                        }
+                        if (onClose) onClose();
+                      }}
+                      className="btn btn-primary btn-sm"
+                      style={{ marginTop: 8, fontSize: "0.725rem", padding: "3px 8px" }}
+                    >
+                      {isNutritionOrWater ? "Open Nutrition" : "Log Workout Now"}
+                    </button>
+                  );
+                })()}
               </div>
 
               <button

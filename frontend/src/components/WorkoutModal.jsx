@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { X, Flame, Clock, Calendar, Dumbbell, Sparkles } from "lucide-react";
 
 // Calorie burn rate estimates per minute by category
-const CALORIE_RATES = {
+export const CALORIE_RATES = {
   Cardio: 11,
   HIIT: 12.5,
   Strength: 8.5,

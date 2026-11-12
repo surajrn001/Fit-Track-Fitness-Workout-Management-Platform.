@@ -1,5 +1,5 @@
 from datetime import datetime, date
-from typing import Optional, List
+from typing import Optional, List, Literal
 from pydantic import BaseModel, EmailStr, Field
 
 # ----------------- User Schemas -----------------
@@ -268,4 +268,180 @@ class PersonalizedDashboardResponse(BaseModel):
     recent_badges: List[BadgeResponse]
     total_badges_unlocked: int
     weekly_improvement: Optional[str] = None
+
+
+# ----------------- Meals & Nutrition Schemas -----------------
+MealTypeLiteral = Literal["Breakfast", "Lunch", "Dinner", "Snacks"]
+
+class MealBase(BaseModel):
+    meal_type: MealTypeLiteral
+    food_name: str = Field(..., min_length=1, max_length=120)
+    calories: float = Field(..., ge=0, le=10000)
+    protein: float = Field(default=0.0, ge=0, le=1000)
+    carbs: float = Field(default=0.0, ge=0, le=1000)
+    fats: float = Field(default=0.0, ge=0, le=1000)
+    meal_date: Optional[date] = None
+
+class MealCreate(MealBase):
+    pass
+
+class MealUpdate(BaseModel):
+    meal_type: Optional[MealTypeLiteral] = None
+    food_name: Optional[str] = Field(default=None, min_length=1, max_length=120)
+    calories: Optional[float] = Field(default=None, ge=0, le=10000)
+    protein: Optional[float] = Field(default=None, ge=0, le=1000)
+    carbs: Optional[float] = Field(default=None, ge=0, le=1000)
+    fats: Optional[float] = Field(default=None, ge=0, le=1000)
+    meal_date: Optional[date] = None
+
+class MealResponse(BaseModel):
+    id: int
+    user_id: int
+    meal_type: str
+    food_name: str
+    calories: float
+    protein: float
+    carbs: float
+    fats: float
+    meal_date: date
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class NutritionSummaryResponse(BaseModel):
+    date: date
+    total_calories: float
+    calorie_goal: int
+    calories_burned: float
+    net_calories: float
+    total_protein: float
+    total_carbs: float
+    total_fats: float
+    meals_count: int
+    by_meal_type: dict
+    weekly_trend: List[dict]
+
+
+# ----------------- Water Intake Schemas -----------------
+class WaterLogCreate(BaseModel):
+    quantity: int = Field(..., gt=0, le=10000)
+    date: Optional[date] = None
+
+class WaterGoalUpdate(BaseModel):
+    daily_water_goal_ml: int = Field(..., ge=500, le=10000)
+
+class WaterLogResponse(BaseModel):
+    id: int
+    user_id: int
+    quantity: int
+    date: date
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class WaterSummaryResponse(BaseModel):
+    date: date
+    total_ml: int
+    liters_consumed: float
+    daily_goal_ml: int
+    goal_liters: float
+    progress_percentage: float
+    logs: List[WaterLogResponse]
+    weekly_trend: List[dict]
+
+
+# ----------------- Workout Suggestions Schemas -----------------
+class WorkoutSuggestion(BaseModel):
+    title: str
+    category: str
+    suggested_duration_mins: int
+    estimated_calories: float
+    intensity: str
+    reason: str
+    exercises: List[str]
+
+class SuggestionsResponse(BaseModel):
+    focus_summary: str
+    streak_status: str
+    suggestions: List[WorkoutSuggestion]
+
+
+# ----------------- Third-Party Integration Schemas -----------------
+class IntegrationStatusResponse(BaseModel):
+    provider: str
+    label: str
+    is_connected: bool
+    daily_steps: int
+    synced_calories: float
+    last_synced_at: Optional[datetime] = None
+
+class IntegrationSyncRequest(BaseModel):
+    steps: Optional[int] = Field(default=None, ge=100, le=100000)
+    active_minutes: Optional[int] = Field(default=None, ge=5, le=600)
+
+class IntegrationSyncResponse(BaseModel):
+    provider: str
+    steps_synced: int
+    active_minutes: int
+    calories_synced: float
+    workout_logged: bool
+    message: str
+    integration: IntegrationStatusResponse
+
+
+# ----------------- Reminder Settings Schemas -----------------
+class ReminderSettingUpdate(BaseModel):
+    workout_reminder_enabled: Optional[bool] = None
+    workout_reminder_time: Optional[str] = Field(default=None, pattern=r"^([01]\d|2[0-3]):[0-5]\d$")
+    workout_reminder_note: Optional[str] = Field(default=None, min_length=2, max_length=255)
+    meal_reminder_enabled: Optional[bool] = None
+    meal_reminder_times: Optional[str] = Field(default=None, min_length=3, max_length=100)
+    water_reminder_enabled: Optional[bool] = None
+    water_reminder_interval_mins: Optional[int] = Field(default=None, ge=15, le=480)
+    daily_water_goal_ml: Optional[int] = Field(default=None, ge=500, le=10000)
+    daily_calorie_goal: Optional[int] = Field(default=None, ge=800, le=8000)
+
+class ReminderSettingResponse(BaseModel):
+    id: int
+    user_id: int
+    workout_reminder_enabled: bool
+    workout_reminder_time: str
+    workout_reminder_note: str
+    meal_reminder_enabled: bool
+    meal_reminder_times: str
+    water_reminder_enabled: bool
+    water_reminder_interval_mins: int
+    daily_water_goal_ml: int
+    daily_calorie_goal: int
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class ReminderCheckResponse(BaseModel):
+    triggered_count: int
+    triggered_types: List[str]
+    message: str
+
+
+# ----------------- Advanced Analytics Schemas -----------------
+class AdvancedAnalyticsResponse(BaseModel):
+    period: str
+    consistency_score: float
+    active_days: int
+    total_period_days: int
+    goal_completion_rate: float
+    completed_goals: int
+    total_goals: int
+    avg_daily_burn: float
+    avg_daily_intake: float
+    avg_daily_water_liters: float
+    best_weekday: Optional[str] = None
+    daily_balance_series: List[dict]
+    weekday_breakdown: List[dict]
+    category_distribution: List[dict]
+    insights: List[str]
+
 

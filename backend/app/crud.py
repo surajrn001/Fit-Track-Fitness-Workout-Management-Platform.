@@ -3,7 +3,7 @@ from typing import List, Optional, Tuple, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc, and_, or_
 
-from .models import User, Workout, Progress, Goal, Notification, WorkoutPlan, Exercise, Streak, Badge, UserBadge
+from .models import User, Workout, Progress, Goal, Notification, WorkoutPlan, Exercise, Streak, Badge, UserBadge, ReminderSetting
 from .schemas import (
     WorkoutCreate, WorkoutUpdate, GoalCreate, GoalUpdate,
     WorkoutPlanCreate, WorkoutPlanUpdate, ExerciseCreate, ExerciseLogRequest
@@ -272,7 +272,11 @@ def mark_all_notifications_read(db: Session, user_id: int) -> int:
     return count
 
 def trigger_daily_reminders_if_needed(db: Session, user_id: int):
-    """If user hasn't logged a workout today, ensure they receive a daily workout reminder."""
+    """If user hasn't logged a workout today and reminders are enabled, create a daily reminder."""
+    setting = db.query(ReminderSetting).filter(ReminderSetting.user_id == user_id).first()
+    if setting and not setting.workout_reminder_enabled:
+        return
+
     today = date.today()
     today_workouts = db.query(Workout).filter(
         Workout.user_id == user_id,
